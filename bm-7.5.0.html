@@ -1,0 +1,148 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.5.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.5.0</h1>
+                        <span class="date">Sept 12, 2021</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            <p> BitMagic now requires C++17 compiler.
+                            </p>
+                            <p>
+                                New example: svsample07a added to illustrate scanner and interval enumerator to study the 
+                                properties of unsorted integer sequences in compact memory mode.
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <code>bm::sparse_vector&lt;&gt;</code> - succinct vector using
+                                principles of bit slicing (or bitwise transposition) reworked to
+                                support signed integer types. Previous versions were designed for
+                                unsigned types and it was a limitation. Signed types use complement
+                                codes, which may not be friendly to bit-slicing approach because
+                                negative ints with small absolute values become strings of 1s on the
+                                binary level -1 (represented as 11111). New version handles this case
+                                and automatically transforms signed values into “sign and magnitude”
+                                internal representation to have good memory and disk serialization
+                                efficiency (BM vectors are designed to be used as a variable binary
+                                encoders for non-sparse cases). New feature is consistently supported
+                                in serialization, scanner search and should be completely transparent for the programme
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                <code>bm::str_sparse_vector&lt;&gt;</code> reworked to transparently
+                                support dynamic string length. The initial configuration used as a template parameter is now means the initial value (16 in the example below)
+                                <code>
+                                    typedef bm::str_sparse_vector&lt;char, bvector_type, 16&gt;
+                                    str_sv_type;
+                                </code>
+                                When a string with length above the specified parameter added, the container automatically resize its internal bit-matrix to correctly support it. No need to conservatively pre-allocate values now.
+                                This is a significant internal change which will allow to implement succinct vectors of arrays based on the same bit-slicing principles.
+                            </p>
+                        </li>
+
+                        <li>
+                            New example: svsample07a added to illustrate use of fast scanner and 
+                            interval enumerator to study the properties of unsorted integer sequences 
+                            in compact memory mode.
+                        </li>
+
+                        <li>
+                            <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.5.0/" class="button">Download v7.5.0 (Sourceforge)</a>
+                            <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.5.0" class="button">GitHub</a>
+                        </li>
+
+</section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

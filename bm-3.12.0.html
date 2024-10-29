@@ -1,0 +1,112 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 3.12.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+
+							<header>
+								<h1>Version 3.12.0</h1>
+                                <span class="date">June 15, 2018</span>
+							</header>
+                            
+                            <p></p>
+                            <h2>Release Notes</h2>
+                            
+                            <ol>
+                                <li>Implemented const iterator for bm::sparse_vector&lt;&gt; <a href="doxygen/html/classbm_1_1sparse__vector_1_1const__iterator.html">bm::sparse_vector&lt;&gt;::const_iterator</a></li>
+                                <li>Implemented back inserter for bm::sparse_vector&lt;&gt; <a href="doxygen/html/classbm_1_1sparse__vector_1_1back__insert__iterator.html">bm::sparse_vector&lt;&gt;::back_insert_iterator</a></li>
+                                <li>Implemented new search algorithm utility class (scanner) for unordered sets bm::sparse_vector&lt;&gt; 
+                                    <a href="doxygen/html/classbm_1_1sparse__vector__scanner.html">bm::sparse_vector_scanner&lt;&gt;</a></li>
+                                <li>Performance optimizations of common logical operations, construction and destruction of <code>bm::bvector&lt;&gt;</code></li>
+                                <li>New bit-vector method to find relative bit position for the specified rank <a href="doxygen/html/classbm_1_1bvector.html#ab4cb380d6481c423831868a2b3fd3c34">bm::bvector&lt;&gt;::find_rank(...)</a></li>
+                                <li>New example to illustrate principles of scanner/search with bit-transposed vector <a href="sparse-vector-search.html">Read more..</a></li>
+                                <li>SIMD performance optimizations (minor) for AVX2 and SSE4.2</li>
+                                <li>Improved test code coverage, fixed a few rare bugs</li>
+                                <li>Improved build environment, cmake files and settings</li>
+                                <li>#define BMCOUNTOPT deprecated, concerns over thread safety</li>
+                            </ol>
+
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic3.12.0/" class="button">Download v 3.12.0</a></p>
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

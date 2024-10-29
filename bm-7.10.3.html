@@ -1,0 +1,177 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.10.3</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.10.3</h1>
+                        <span class="date">Feb 14, 2022</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            <p>
+                                Fixed bug in serialization/deserialization of empty null-able
+                                <code>bm::str_sparse_vector&lt;&gt;</code>
+                                (could case crashes and assertion faults)
+                            </p>
+                        </li>
+                        <li>
+                            <p>Fixed bug corner in XOR compression of empty succinct vectors</p>
+                        </li>
+                        <li>
+                            C language interface (libbm) – fixed incorrect handling of CPU SIMD capabilities (AVX2)
+                        </li>
+                        <li>
+                            <p>
+                                Implemented immutable (read-only) bit-vectors.
+                                New version of BitMagic library first introduces an API for making vectors immutable.
+                                Immutable mode has two advantages: better memory footprint and faster analytical operations.
+                            </p>
+                            <p>
+                                Mutable writable vectors in BitMagic are implemented using block allocation 
+                                strategy (that is why sparse vectors). To facilitate edits in compressive mode 
+                                vectors do space reservations to avoid frequent re-allocations which otherwise be a performance killer 
+                                in multi-threaded scenarios. 
+                                Such memory reservations is obviously not free and goes against the idea of memory succinct operations.
+                            </p>
+
+                            <p>
+                                New version adds APIs to freeze vectors to read-only mode, which assembles all blocks together into one 
+                                memory arena (heap defragmentation, which can reduce memory footprint for your program) and drops any 
+                                reservations made for editing (reduce RAM consumption).
+                                An additional extra benefit is that immutable mode now uses contiguous arena of memory, 
+                                giving CPU a better chance for cache memory reuse and more efficient hardware prefetch. 
+                                Performance benchmarking  shows that this factor can give 1 to 5 percent performance improvements on 
+                                data-science operations like binary distance functions (Dice). 
+                                The performance advantage is a nice bonus for applications which can use and benefit from read-only 
+                                mode.
+                            </p>
+                            <p>
+                                current implementation still turns read-write mode back on deserialization of vectors because current serialization format remains without changes for this release.
+                            </p>
+                            <p>
+                                Example <a href="https://github.com/tlk00/BitMagic/tree/master/samples/bvsample26">bvsample26</a> illustrates 
+                                basic API functions for read-only mode. 
+                            </p>
+
+                        </li>
+                        <li>
+                            <p>
+                                New method for random access read from the Rank-Select succinct vector
+                                <code>bm::rsc_sparse_vector&lt;&gt;::gather()</code> – new method can give you
+                                10% and better performance improvement comparing to naïve random access.
+                                Actual performance improvement depends on the access pattern and data pattern.
+                            </p>
+                            <p>
+                                Example <a href="https://github.com/tlk00/BitMagic/tree/master/samples/rscsample06">rscsample06</a> shows 
+                                gather method in action.
+                            </p>
+
+                        </li>
+                        <li>
+                            <p>Improved performance of Rank-Select index. 
+                            The most notisable performance improvement is for Arm and configurations without efficient SIMD acceleration. 
+                            SSE4.2 and AVX2 builds show minor improvement or parity with the previous version
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                             Improved <code>bm::bvector<>insert()/shift_right()</code> to avoid unnecessary deoptimization of 
+                                compressed blocks.
+                            </p>
+                        </li>
+                    </ol>
+
+                    <p>
+                        <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.10.3/" class="button">Download v7.10.3 (Sourceforge)</a>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.10.3" class="button">GitHub</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

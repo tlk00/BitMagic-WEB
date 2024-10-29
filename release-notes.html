@@ -1,0 +1,414 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Release Notes</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <h1>History of Releases</h1>
+                            <p>
+                                <span class="image right">
+                                    <img src="images/princeton04.jpg" alt="" />
+                                </span>
+
+                                <h3>v8.0.0</h3>
+                                <span class="date">July 1, 2024</span>
+                            <p>
+                                New serialization format for bit-vectors and sparse vectors.
+                                Better compression, backward compatible (new code can read old vectors).
+                                <a href="bm-8.0.0.html">More</a>
+                            </p>
+
+                            <h3>v7.13.4</h3>
+                            <span class="date">May 12, 2023</span>
+                            <p>
+                                Bug fixes, new functionality for swapping bits.
+                                <a href="bm-7.13.4.html">More</a>
+                            </p>
+
+                            <h3>v7.12.3</h3>
+                            <span class="date">July 14, 2022</span>
+                            <p>
+                                Bug fixes and optimization of compressive string binary search, aggregator, etc.
+                                <a href="bm-7.12.3.html">More</a>
+                            </p>
+
+                            <h3>v7.11.2</h3>
+                            <span class="date">Apr 17, 2022</span>
+                            <p>
+                                Bug fixes and optimizations for immutable vectors.
+                                <a href="bm-7.11.2.html">More</a>
+                            </p>
+
+                            <h3>v7.10.3</h3>
+                            <span class="date">Feb 14, 2022</span>
+                            <p>
+                                Implemented immutable vectors and improved rank-select compressive vector.
+                                <a href="bm-7.10.3.html">More</a>
+                            </p>
+
+                            <h3>v7.9.3</h3>
+                            <span class="date">Jan 06, 2022</span>
+                            <p>
+                                Improved APIs for succinct vectors, optimizations, fixed bugs in NULL-able string vector.
+                                <a href="bm-7.9.3.html">More</a>
+                            </p>
+
+                            <h3>v7.8.0</h3>
+                            <span class="date">Nov 28, 2021</span>
+                            <p>
+                                Set of new index-free search methods on compressive memory vectors.
+                                SSE2 optimizations, first release of ARM NEON optimizations.
+                                <a href="bm-7.8.0.html">More</a>
+                            </p>
+
+                            <h3>v7.7.7</h3>
+                            <span class="date">Nov 12, 2021</span>
+                            <p>
+                                OR-AND fused operation for bit-vectors and pipelines.
+                                Major <code>bm::aggregator&lt;&gt;</code> improvements to auto-tune searches for L2 cache size.
+                                <a href="bm-7.7.7.html">More</a>
+                            </p>
+
+                            <h3>v7.6.0</h3>
+                            <span class="date">Oct 17, 2021</span>
+                            <p>
+                                Major <code>bm::scanner&lt;&gt;</code> improvements to support pipelined bulk searches.
+                                <a href="bm-7.6.0.html">More</a>
+                            </p>
+
+
+                            <h3>v7.5.0</h3>
+                            <span class="date">Sept 12, 2021</span>
+                            <p>
+                                Support for signed integer types, string sparse vector resizes string
+                                length automatically, C++ 17.
+                                <a href="bm-7.5.0.html">More</a>
+                            </p>
+
+                            <h3>v7.4.0</h3>
+                            <span class="date">July 4, 2021</span>
+                            <p>
+                                3-valued logic on bit-vectors. WebAssembly SIMD support. Bug fixes.
+                                <a href="bm-7.4.0.html">More</a>
+                            </p>
+
+                            <h3>v7.3.0</h3>
+                            <span class="date">Jan 26, 2021</span>
+                            <p>
+                                Improved XOR compression of succinct sparse vectors. Bug fixes.
+                                <a href="bm-7.3.0.html">More</a>
+                            </p>
+
+                            <h3>v7.2.0</h3>
+                            <span class="date">Sept 24, 2020</span>
+                            <p>
+                                Improved compression of succinct sparse vectors.
+                                Faster const_iterator.
+                                <a href="bm-7.2.0.html">More</a>
+                            </p>
+
+                            <h3>v7.1.0</h3>
+                            <span class="date">Sept 9, 2020</span>
+                            <p>
+                                Critical bug fix in AND operation,
+                                platform specific optimizations for ARM CPU.
+                                <a href="bm-7.1.0.html">More</a>
+                            </p>
+
+                            <h3>v7.0.0</h3>
+                            <span class="date">July 30, 2020</span>
+                            <p>
+                                Improved compression using Binary Interpolatice Coding. 5-6% better compression
+                                rate based on Gov2 corpus of inverted lists.
+                                <a href="bm-7.0.0.html">More</a>
+                            </p>
+
+                            <h3>v6.4.0</h3>
+                            <span class="date">May 13, 2020</span>
+                            <p>
+                                Rank-Select compressed container improved for fast random access of known elements, compiler and bug fixes.
+                                <a href="bm-6.4.0.html">More</a>
+                            </p>
+                            <h3>v6.3.0</h3>
+                            <span class="date">April 1, 2020</span>
+                            <p>
+                                Rank-Select compressed container improved fast decode functions and const iterator.
+                                <a href="bm-6.3.0.html">More</a>
+                            </p>
+                            <h3>v6.2.0</h3>
+                            <span class="date">March 8, 2020</span>
+                            <p>
+                                New APIs for ranges and intervals, bm::inetrval_enumerator&lt;&gt; for bit-vector traversal as ranges.
+                                <a href="bm-6.2.0.html">More</a>
+                            </p>
+                            <h3>v6.1.0</h3>
+                            <span class="date">Feb 8, 2020</span>
+                            <p>
+                                2-5x faster WebAsm, new <code>bvector&lt;&gt;</code> methods for ranges and inetrvals
+                                <a href="bm-6.1.0.html">More</a>
+                            </p>
+
+                            <h3>v6.0.0</h3>
+                            <span class="date">Jan 20, 2020</span>
+                            <p>
+                                New serialization, supports bookmarks and range deserialization
+                                <a href="bm-6.0.0.html">More</a>
+                            </p>
+
+                            <h4>v5.4.0</h4>
+                            <span class="date">Dec 8, 2019</span>
+                            <p>
+                                New algorithm for mismatch search in sparse vectors.
+                                <a href="bm-5.4.0.html">More</a>
+                            </p>
+
+                            <h4>v5.3.0</h4>
+                            <span class="date">Nov 28, 2019</span>
+                            <p>
+                                Bit-vector search for the first mismatch bit.
+                                <a href="bm-5.3.0.html">More</a>
+                            </p>
+
+                            <h4>v5.2.0</h4>
+                            <span class="date">Oct 15, 2019</span>
+                            <p>
+                                Support of selective(gather) deserialization of sparse vectors.
+                                <a href="bm-5.2.0.html">More</a>
+                            </p>
+
+                            <h4>v5.1.1</h4>
+                            <span class="date">Sept 15, 2019</span>
+                            <p>
+                                Support of WebAssemblies. Improved compression in back insert iterators.
+                                <a href="bm-5.1.1.html">More</a>
+                            </p>
+
+                            <h3>v5.0.0</h3>
+                            <span class="date">July 20, 2019</span>
+                            <p>
+                                Binary Interpolated Encoding of bit-vectors improves compression rate.
+                                <a href="bm-5.0.0.html">More</a>
+                            </p>
+
+                            <h3>v4.0.0</h3>
+                            <span class="date">June 26, 2019</span>
+                            <p>
+                                64-bit index space support for big data problems.
+                                <a href="bm-4.0.0.html">More</a>
+                            </p>
+
+                            <h4>v3.20.0</h4>
+                            <span class="date">March 19, 2019</span>
+                            <p>
+                                Implemented set of iterators for
+                                <code>bm::str_sparse_vector&lt;&gt;</code> - bit-transposed succinct container for strings
+                                <a href="bm-3.20.0.html">More</a>
+                            </p>
+
+                            <h4>v3.19.0</h4>
+                            <span class="date">Jan 16, 2019</span>
+                            <p>
+                                Implemented 3-operand logical functions for <code>bvector&lt;&gt;</code>.
+                                New examples and tutorial for Algebra of Sets.
+                                <a href="bm-3.19.0.html">More</a>
+                            </p>
+
+
+                            <h4>v3.18.0</h4>
+                            <span class="date">Dec 26, 2018</span>
+                            <p>
+                                String sparse vector for dictionaries <code>str_sparse_vector&lt;&gt;</code> improved to support succinct remapping
+                                and faster binary and scan searches.
+                                <a href="bm-3.18.0.html">More</a>
+                            </p>
+
+                            <h4>v3.17.0</h4>
+                            <span class="date">Dec 5, 2018</span>
+                            <p>
+                                bit-block complexity detection reworked for SSE4.2 and AVX2.
+                                First version of string sparse vector for dictionaries.
+                                <a href="bm-3.17.0.html">More</a>
+                            </p>
+
+                            <h4>v3.16.0</h4>
+                            <span class="date">Nov 11, 2018</span>
+                            <p>
+                                New methods and tools for fast construction of bit-vectors.
+                                <a href="bm-3.16.0.html">More</a>
+                            </p>
+
+                            <h4>v3.15.0</h4>
+                            <span class="date">Oct 28, 2018</span>
+                            <p>
+                                New shift-right functionality for pattern matching, fused SHIFT-AND
+                                fast aggregator, optimizations for AVX2/BMI and SSE4.2 SIMD sets.
+                                <a href="bm-3.15.0.html">More</a>
+                            </p>
+
+                            <h4>v3.14.5</h4>
+                            <span class="date">Oct 5, 2018</span>
+                            <p>
+                                Optimizations for rank-select operations, implemented SIMD and BMI2 accelerated
+                                RS-index.
+                                <a href="bm-3.14.5.html">More</a>
+                            </p>
+
+                            <h4>v3.14.0</h4>
+                            <span class="date">Aug 25, 2018</span>
+                            <p>
+                                Initial version of succinct sparse vector <code>bm::rsc_sparse_vector&lt;&gt;</code>
+                                New container offers very low memory footprint with ability to access elements and
+                                effciently search for data.
+                                <a href="bm-3.14.0.html">More</a>
+                            </p>
+
+                            <h4>v3.13.0</h4>
+                            <span class="date">Aug 10, 2018</span>
+                            <p>
+                                Implemented a new utility class <code>bm::aggregator&lt;&gt;</code> for fast logic (AND, OR, AND-SUB)
+                                operations on groups of vectors. Performance of sparse vector scanner (search) inproved
+                                3x times.
+                                <a href="bm-3.13.0.html">More</a>
+                            </p>
+
+                            <h4>v3.12.6</h4>
+                            <span class="date">July 20, 2018</span>
+                            <p>
+                                Major optimization of associative remapping using bm::sparse_vector&lt;&gt;.
+                                Fixed some crash on empty copy, fixed warnings, added new range based bm::bvector&lt;&gt; range
+                                copy constructor and methods.
+                                <a href="bm-3.12.6.html">More</a>
+                            </p>
+
+                            <h4>v3.12.0</h4>
+                            <span class="date">June 15, 2018</span>
+                            <p>
+                                Implemented const iterator and bult insert iterators for bm::sparse_vector&lt;&gt;.
+                                Added new algorithm for search in bm::sparse_vector&lt;&gt;.
+                                Performance optimization of AND and SUB logical ops, SIMD optimizations, new method for
+                                rank search bm::bvector&lt;&gt;::find_rank(...).
+                                <a href="bm-3.12.0.html">More</a>
+                            </p>
+
+                            <h4>v3.11.0</h4>
+                            <span class="date">April 27, 2018</span>
+                            <p>
+                                Improved C language mapping, added DLL builds for variants of SIMD acceleration, added
+                                auxiliary library for CPU identification. Optimized and functionally improved bm::sparse_vector<> container.
+                                bm::bvector<> added new methods to binary increment bits, fast clear bits, improved performance.
+                                Added new examples. Cleaned code for better compatibility and less warnings.
+                                <a href="bm-3.11.0.html">More</a>
+                            </p>
+
+                            <h4>v3.10.1</h4>
+                            <span class="date">February 11, 2018</span>
+                            <p>
+                                Apache 2.0 License, more SSE4.2 and AVX2 optimizatoins, performance improvements to sparse_vector<>,
+                                new examples/benchmarks. Improved C library libbm. Better cmake build scripts.
+                                <a href="bm-3.10.1.html">More</a>
+                            </p>
+
+                            <h4>v3.10.0</h4>
+                            <span class="date">January 7, 2018</span>
+                            <p>
+                                Initial release of AVX2 optimizations, general and SSE4.2 performance improvements,
+                                new bvector<>::count_to() method, optimizations of sparse_vector<>.
+                                <a href="bm-3.10.0.html">More</a>
+                            </p>
+
+                            <h4>v3.9.0</h4>
+                            <span class="date">October 28, 2017</span>
+                            <p>
+                                Better support of C++11 move constructors, minor performance optimizations, initial version of C language libbm library (a lean wrapper on top of C++).
+                                <a href="bm-3.9.0.html">More</a>
+                            </p>
+
+                            <h4>v3.8.0</h4>
+                            <span class="date">September 10, 2017</span>
+                            <p>
+                                First version of bit transposed sparse vector, minor bug fixes and documentation improvements.
+                                <a href="bm-3.8.0.html">More</a>
+                            </p>
+
+                        </section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

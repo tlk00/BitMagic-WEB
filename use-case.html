@@ -1,0 +1,201 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Use Cases</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <!-- Logo -->
+        <span class="logo">
+            <a href="index.html">BitMagic</a>
+            <span>Library</span>
+        </span>
+        <!-- Nav -->
+        <nav id="nav">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li>
+                    <a href="#" class="icon fa-angle-down">Documentation</a>
+                    <ul>
+                        <li><a href="getting-started.html">Getting started</a></li>
+                        <li><a href="design.html">Design</a></li>
+                        <li><a href="apis.html">API Reference</a></li>
+                        <li><a href="set-algebra.html">Algebra of Sets</a></li>
+                        <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                        <li><a href="release-notes.html">Release Notes</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#" class="icon fa-angle-down">Articles</a>
+                    <ul>
+                        <li><a href="use-case.html">Use cases</a></li>
+                        <li><a href="articles.html">Technical notes</a></li>
+                    </ul>
+                </li>
+                <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+            </ul>
+        </nav>
+        <!-- Nav -->
+    </header>
+    <!-- Wrapper -->
+    <div class="wrapper">
+        <!-- Main -->
+        <section class="main">
+            <section>
+                <h1>Use Cases &amp; Design Patterns</h1>
+                <p>
+                    <span class="image right">
+                        <img src="images/princeton02.jpg" alt="" />
+                    </span>
+
+
+                    <h3>Notes on efficient Model-View-Controller based on compressed vectors</h3>
+                <p>
+                    Discuss approaches to build a high performance MVC working 
+                    on fully compressed BitMagic vectors.
+                    <ul class="actions">
+                        <li><a href="bm-mvc.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>Construction of memory efficient histograms</h3>
+                <p>
+                    Study a use case of construction, storage and access of various types of
+                    histograms using compressed memory structures.
+                    <ul class="actions">
+                        <li><a href="bm-hist-compr.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>Genomic Viewer layout calculation with succinct data structures</h3>
+                <p>
+                    Study a prototype genomics viewer with bit-intervals, succinct containers
+                    and ASCII art. Succint, bit-vector based data model allows easy
+                    slicing in genomic coordinates and feature properties.
+                    <ul class="actions">
+                        <li><a href="gen-layout.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>DNA compression and mismatch search with bit-transposed vector</h3>
+                <p>
+                    Compress DNA sequence and construct a comparison function using
+                    bit-plain XOR mismatch algorithm optimized for SSE4.2 and AVX2 SIMD.
+
+                    <ul class="actions">
+                        <li><a href="dna-compare.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>Compressed dictionary</h3>
+
+                <p>
+                    Search for terms from NASA NED Extragalactic Database using low memory footprint
+                    dictionaries. Tech.note describes hybrid algorithm, which combines binary search
+                    with SIMD accelerated final logical search with search space pruning.
+
+                    <ul class="actions">
+                        <li><a href="star-search.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>DNA Search with bit-vector fingerprints</h3>
+
+                <p>
+                    Search for substring within a DNA sequence using bit-vector fingerprints.
+                    This use case demonstrates and explains fingerprinting, vectorization,
+                    search space pruning, cache optimizations using readily available benchmarking
+                    application searching withing human chromosome 1.
+
+                    <ul class="actions">
+                        <li><a href="dna-search.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+                <h3>SNP Search with succinct data structures</h3>
+
+                <p>
+                    Bioinformatics is one of the data intensive areas. Situations when searching a needle
+                    in a hay stack happen every day, data sets are large and random as a nature itself.
+                    This use-case illustrates search for human mutations (SNPs) mapped to chromosome 1
+                    without building a formal reverse index, just using traditional (STL) and
+                    bit-transposed (BitMagic) data structures. Use case comes with a code example and
+                    benchmark numbers, showing performance and memory footprint comparisons.
+                    Use case illustrates good use for memory compact <code>bm::rsc_sparse_vector&lt;&gt;</code>.
+                    <ul class="actions">
+                        <li><a href="succinct-snp-search.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>Histogram construction - counting sort</h3>
+
+                <p>
+                    Historgams of integer values is a great way to compress redundant data, tool for
+                    statistical analysis, a way to store database index statistics and build optimal query execution plans.
+                    Contruction and storage of histograms needs to be memory efficient and performant. Class of tasks related to
+                    building histogram of integer set can be solved using <code>bm::sparse_vector&lt;&gt;</code>.
+                    This uses case provides sample code how to build a histogram using memory efficient sparse_vector
+                    and compares it to a few other methods, based on QuickSort and R-B tree.
+
+                    <ul class="actions">
+                        <li><a href="hist-sort.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>Topological Algorithms for Trees with Bit Vector Indexes</h3>
+                <p>
+                    Trees are very generic algorithmic structures with a wide range of algorithmic problems related
+                    to topological algorithms. In this use case we describe how problem of finding common ancestors can
+                    be solved with set algebra operations.
+                    <ul class="actions">
+                        <li><a href="bm-bitindex-tree.html" class="button small">More</a></li>
+                    </ul>
+                </p>
+
+                <h3>Job Queue Scheduling with Bit Vector Indexes</h3>
+                <div>
+                    <p>
+                        Large scale web applications often face the problem of optimal, near real-time job scheduling and messaging.
+                        In this use case we describe design principles of a system and use of compressed bit vectors to optimize
+                        workload distribution and solve monitoring and operational challenges.
+                        <ul class="actions">
+                            <li><a href="bm-optque.html" class="button small">More</a></li>
+                        </ul>
+                    </p>
+                </div>
+            </section>
+    </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="copyright">
+            &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+        </div>
+    </footer>
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/skel.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/jquery.dropotron.min.js"></script>
+    <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

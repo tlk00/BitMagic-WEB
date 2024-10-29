@@ -1,0 +1,189 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.1.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.1.0</h1>
+                        <span class="date">Sept 9, 2020</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <p>BitMagic v.7.1.0 focuses on improving support for ARM CPU.</p>
+
+
+                    <ol>
+                        <li>
+			Fixed bug (rooted in 6.x.x versions) of AND operation.
+			This is rare, but potentially serious issue, please upgrade your version asap.
+                        </li>
+
+                        <li>
+                            <p>
+                        ARM CPU is getting much attention nowdays, BitMagic library succinct containers
+			are very useful in situations of limited memory and edge computing. 
+			This release improves suppirt there.</p>
+
+			<p>BitMagic v.7.1.0 was formally tested and verified to work on 32-bit ARM (Raspberry Pi).
+			   Formal ARM testing showed certain pain points of BitMagic 
+			  (bitscan algorithms reliance on POPCNT). As part of 7.1.0 release we introduced a different approach
+			  to bitscan based on CLZ (count trailing/leading zeroes) which is available natively on ARM.
+			  This resulted in significant improvement in performance of <code>bvector<>::enumerator</code> on ARM. 
+			</p>
+
+			<p>ARM testing also showed ways to improve Rank-Select algorithms and succinct containers based on Rank.
+			Some optimizations are still in progress, subject of follow up releases. </p>
+
+			<p>ARM NEON SIMD support is planned for the future.</p>
+
+                        </li>
+
+
+<h3>Technical notes</h3>
+
+<p>ARM testing identified bitscan algorithm as a common hotspot on ARM (Raspberry Pi 8GB, overclocked to 2GHz).
+x86 used either LUT based bit-counting or hardware accelerated POPCNT instruction for bitscan decode. 
+BitScan is used to decode a bit-vector into indexes of set bits (inverted list).
+It is also an important operation for decode of bit-transposed succinct structures.
+</p>
+
+<p>There are multiple variants of BitScan of various levels of (in-)efficiency, here are two common and 
+practically useful variants. 
+</p>
+
+<h3>BitScan based on POPCNT (best for x86)</h3>
+
+<pre>
+<code>
+template &lt;typename B &gt;
+unsigned short
+bitscan_popcnt(bm::id_t w, B* bits, unsigned short offs) 
+{
+    unsigned pos = 0;
+    while (w)
+    {
+        bm::id_t t = w & -w;
+        bits[pos++] = (B)(bm::word_bitcount(t - 1) + offs);
+        w &= w - 1;
+    }
+    return (unsigned short)pos;
+}
+</code>
+</pre>
+
+<h3>BitScan based on Trailing Zeroes (LZCNT) (best for ARM)</h3>
+
+<pre>                                                      
+<code>
+template &lt; typename B &gt;
+unsigned short bitscan_bsf(unsigned w, B* bits) 
+{
+    unsigned short pos = 0;
+    while (w)
+    {
+        bits[pos++] = count_trailing_zeros_u32(w);
+        w &= w - 1;
+    }
+    return pos;
+}
+
+</code>
+</pre>
+
+<p>Practical difference in the context of a C++ program implementing STL-like iterator or bit-visiting algorithms 
+can be up to 30%.
+</p>
+
+                        <p>
+                            <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.1.0/" class="button">Download v7.1.0 (Sourceforge)</a>
+                            <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.1.0" class="button">GitHub</a>
+                        </p>
+
+
+</section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

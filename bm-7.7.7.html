@@ -1,0 +1,207 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.7.7</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.7.7</h1>
+                        <span class="date">Nov 12, 2021</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            <p>
+                                Fixed a bug in <code>bm::bvector<>::merge()</code> - destructive OR
+                                operation, when arg vectors is empty and uninitialized function did not
+                                implement a correct logical OR (serious issue!)
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                Implemented a new logic idiom <code>bvector&lt;&gt;::bit_or_and()</code>
+                                as
+                                <code>C := C OR (A AND B)</code>
+                                Fused OR+AND is an often used idiom in query systems, implementations of SQL and operation on memory compressed structures. Fused implementation uses multiple optimizations and does not require a temporary vector, avoiding allocations and memory copy.
+                                New idiom is 2x times faster in synthetic tests of uncompressed bit-vectors.
+                            </p>
+                            <p>
+                            <p>
+                                <span ><img src="images/bench/BM-AND-OR-fused.png" width="512" alt="OR-AND fused" /></span>
+                            </p>
+
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                <code>bm::aggregator::pipeline</code> now implements a fast mode to run
+                                multiple AND-SUB queries with an optional aggregation of results via an
+                                OR function.
+                            </p>
+                            <p>
+                                Aggregator logical pipeline implements fast idioms used in BitMagic
+                                succinct vectors to implement sparse/dense vector search or query
+                                requests.
+                            </p>
+                            <p>
+                                <code>bm::aggregator::pipeline</code> uses cache memory bandwidth and
+                                optimizations to implement series of AND-SUB as:
+                                <code>(bv1 AND bv2 AND bv3…) AND NOT (bvS1 OR bvS2 OR … )</code> with an
+                                optional final accumulation of multiple search requests using OR
+                                logical function.
+                            </p>
+                            <p>
+                                <span class="image fit"><img src="images/BM-aggregator-AND-SUB-OR.png" width="512" alt="OR-AND-SUB pipeline fused" /></span>
+                            </p>
+
+                            <p>
+                                Aggregator pipeline is used internally in BitMagic to implement succinct bit-sliced vector searches
+                                (<code>bm::scanner&lt;&gt;</code>) 2-3 times faster.
+                                The speed achieved in 7.7.7 release demonstrates performance levels otherwise specific to
+                                systems using indexes.
+                                Fast index-free searches can significantly reduce both the
+                                systems footprint (RAM and disk) and complexity of implementation.
+                            </p>
+
+
+                        </li>
+                        <li>
+                            <p>
+                                Algebra of Sets tutorial (bvsetalgebra.cpp) example reworked to
+                                illustrate use of new fused OR_AND operations and aggregator pipeline
+                                (AND-SUB-OR).
+
+                                <a href="https://github.com/tlk00/BitMagic/tree/master/samples/bvsetalgebra">bvsetalgebra</a>
+                            </p>
+
+                            <p>
+                                Example implements a simple synthetic benchmark comparing <code>bm::scanner</code> search
+                                modes on unsorted, succinct string vector. New pipeline gives 3x improved performance,
+                                with extra improvements in optimized SIMD versions.
+                            <p>
+                                <span class="image fit"><img src="images/bench/BM_scanner_pipeline777.png" width="512" alt="BM scanner" /></span>
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <code>bm:scanner::pipeline</code> implements fast multiple string search in memory compressed
+                                string vector with an optional OR stage (under the hood uses <code>bm::aggregator&lt;&gt;</code>).
+                                Latest version makes a change in semantics to use compile-time options to configure pipeline, new options result in faster code due to compile-time specialization (C++-17 is very useful there).
+                            </p>
+                            <p>
+                                OR stage helps to implement a SQL idiom: Field1 IN (value1, value2… valueN) for cases where list of
+                                search values is in the tens of thousands or more or Field1 IN (SELECT FieldN FROM…)
+                                idiom using memory compressed index-free search.
+                            </p>
+
+                            <p>
+                                New version adds important optimizations of the algorithms to
+                                automatically tune-up for a typical L2 cache size, but also adds a
+                                manual override (batch_size) to tune and tweak the system for a specific
+                                HW configuration and data distribution statistics. The auto-tune topic
+                                definitely deserves more optimization in the future.
+                            </p>
+                            <p>
+                                New usage modes and benchmarks are available at:
+
+                                <a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample07" >strsvsample07</a>
+
+                            </p>
+
+                        </li>
+
+                    </ol>
+
+                    <p>
+                        <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.7.7/" class="button">Download v7.7.7 (Sourceforge)</a>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.7.7" class="button">GitHub</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

@@ -1,0 +1,164 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 6.3.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 6.3.0</h1>
+                        <span class="date">April 1, 2020</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            <p>
+                                The main story of this release is to improve <code>rsc_sparse_vector&gt;&lt;</code>
+                                (Rank-Select compressed container) to add <code>const_iterator</code>
+                                class to simplify access to container content. Container now provides
+                                both C-stype (<code>decode*</code> methods) and iterator.
+                                This release also includes significant optimizations to improve Rank-Select access.
+                            </p>
+                        </li>
+
+                        <li>
+                            <a href="doxygen/html/rscsample03_8cpp-example.html">rscsample03.cpp</a>
+                            illustrates usage of: <code>bm::rsc_sparse_vector&lt;&gt;::const_iterator</code>
+                        </li>
+
+                        <li>
+                            Performance optimization: <code>rsc_sparse_vector&lt;&gt;::decode*</code> methods (up to 2x improvement)
+                        </li>
+                        <li>
+                            Performance optimization: <code>bvector&lt;&gt;::enumerator</code>
+                            (constant iterator for bvector&lt;&gt; to decode bit-vector as indexes of set bits)
+                        </li>
+
+                        <li>
+                            New method to compute corrected rank <code>bvector&lt;&gt;::rank_corrected()</code>
+                            New method computes rank() minus value(0 or 1) of the index value.
+                            rank_corrected() is faster than an equivalent expression of "rank()-test()"
+                            BitMagic uses rank_corrected() in succinct algorithms for container address resolution.
+                            <a href="doxygen/html/sample17_8cpp-example.html">sample17.cpp</a> Example reworked to illustrate rank_corrected()</code>
+                        </li>
+
+                    </ol>
+
+                    <p>
+                        <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic6.3.0/" class="button">Download v6.3.0 (Sourceforge)</a>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v6.3.0" class="button">GitHub</a>
+                    </p>
+
+
+                    <h3>Technical notes on Rank-Select sparse vector</h3>
+
+                    <p>
+                        Rank-Select Succinct data representation is also known as “NULL values compression”.
+                        This is not a truly compression method, it is a succinct method.
+                        The terminological difference between compression and succinct is our ability to access the data in compressed
+                        form (with some penalty) without decoding the whole data block or compression page.
+                    </p>
+
+                    <p>
+                        <span class="image left"><img src="images/lay/null_compr.png" alt="NULL compression" /></span>
+                    </p>
+                    <p>
+                        BitMagic implementation of Rank-Select compressed vector combines two methods: NULL compression 
+                        implemented with Rank-Select method AND bit-transposition. 
+                        Bit transposition implements a succinct variant of variable bit codec.
+                    </p>
+
+                    <p>Combination of both methods in one container allows to achieve better in-memory
+                    compation without loosing ability to search and access data, trading CPU penalty for memory and 
+                    disk storage efficiency.
+                    </p>
+
+
+
+
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

@@ -1,0 +1,535 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>bm::aggregator&lt;&gt;</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>BitMagic aggregator - utilities for fast logical operations on groups of vectors </h1>
+
+                            <p>Anatoliy Kuznetsov. Aug 2018. anatoliy_kuznetsov@yahoo.com </p>
+                            
+                            <h2>Introduction</h2>
+
+                            <p>Search and retrieval systems often need to perform uniform logical operation on a 
+                            number of vectors. AND(a, b, c, d). Group operations can be easily implemented via 
+                            pairwise operations as  res = a & b; res = res & c; res = res & d;</p>
+
+                            <p>Easy to do yet subject of severe penalty for all cases except maybe very small 
+                            and very sparse sets. Operations on dense sets will be memory bound. 
+                            Logical operations on pure bit sets are fast on every contemporary CPU and memory is 
+                            actually quite slow. Don’t be mistaken by the high “CPU Load” of your app - 
+                            highly likely CPU may be actually waiting for memory.</p>
+
+                            <p>Bit-vector logical operations are naturally "light" on CPU and often suffer from memory 
+                            related starvation.
+                            </p>
+
+                            <h2>bm::aggregator&lt;&gt;</h2>
+
+                            <p>Bitmagic library implements an <a href="doxygen/html/classbm_1_1aggregator.html">bm::aggregator&lt;&gt;</a>
+utility class to perform aggregation operations.</p>
+
+                            <h3>Quick usage example</h3>
+
+<pre>
+<code>
+#include "bm.h"
+#include "bmaggregator.h"
+
+int main(void)
+{
+       // declare standalone aggregator for logical operations
+        bm::aggregator&lt;bm::bvector&lt;&gt; &gt; agg;
+
+       std::vector&lt;std::unique_ptr&lt;bm::bvector&lt;&gt; &gt; &gt; vect;
+        for (unsigned i = 0; i < max_vectors; ++i)
+        {
+           std::unique_ptr<bm::bvector&lt;&gt; > bv(new bm::bvector<>());
+            bv->set(i);
+            bv->set(i+1);
+            bv->set(10000);
+            bv->set(20000);
+            vect.push_back(std::move(bv));
+        }
+
+         // in a loop we add all agruments to the aggregator
+         // (aggregator does not take ownership of pointers it receives)
+         //
+         for (unsigned i = 0; i < vect.size(); ++i)
+         {
+                agg.add(vect[i].get());
+         }
+
+         bm::bvector<> bv_res; // target vector for aggregation
+         agg.combine_or(bv_res);  // perform logical OR on a vector group
+         agg.reset();
+
+   return 0;
+}
+</code>
+</pre>
+
+                            <p>Supported operations (v.3.13.0):
+                                <li>OR              - OR all vectors (global union)</li>
+                                <li>AND            - AND all vectors ( common component )</li>
+                                <li>AND SUB    - AND all of set1 MINUS (AND NOT) all of set2 (AND BUT)</li>
+                            </p>
+
+
+                            <h2>Benchmark</h2>
+
+                            <p>Benchmark data are synthetic, it generates 25 bit-vectors with various distribution patterns, 
+                            80M bits each (used in OR and AND tests). For AND SUB it also generates a second set of 7 
+                            random bit-vectors for the span of 50M bits. Benchmark size is large enough not to fit in CPU cache 
+                            yet can be reproduced on a modest hardware with a few spare gigabytes of RAM.   
+                            </p>
+
+                            <p><span class="image fit">
+                            <img src="images/bench/agg-bench01.png" alt="aggregator benchmark" /> </span>
+                            Benchmark data are NOT real. This generated set mixes palin and GAP (RLE prefix sum) compressed blocks at approximately 1:1 ratio,
+                            about 30+ bit-vectors in the mix. Data set is sufficiently large not to fit into CPU cache.
+                            SIMD optimization is implemented for uncompressed BLOBs only (something to improve later).
+                            </p>
+
+                            <p>Quick look shows bm::aggregator<> is substantially faster than conventional linear 
+                            (horizontal) operation.</p>
+                            
+
+                            <h2>Optimization factors</h2>
+
+                            <p>
+                                <li>Cache blocking</li>
+                                <li>Memory bandwidth optimizations (multi-block read)</li>
+                                <li>Use of prefetch</li>
+                                <li>Use of logical operation properties - data set pruning (using digests)</li>
+                                <li>SIMD vectorizations</li>
+                            </p>
+
+                            <h3>Cache blocking</h3>
+
+                            <p><span class="image left"><img src="images/efficient-use-of-tiling-pix-3.png" alt="Efficient use of tiling" /></span> 
+                            BitMagic library is architected to store its sparse bit vectors as 8KB blocks. 
+                            There are two ways of doing logical operations on vector groups: go pair by pair (horizontal) 
+                            or use vertical operation on a group of blocks, to maximize cache locality. 
+                            Aggregator uses vertical method.
+                            Cache blocking/tiling technique (article by Intel Corp):
+                            <a href="https://software.intel.com/en-us/articles/efficient-use-of-tiling">https://software.intel.com/en-us/articles/efficient-use-of-tiling</a>.
+                            </p>
+
+                            <h3>Memory bandwidth optimizations</h3>
+
+                            <p>While working on this problem I talked to colleagues from Intel and AMD about 
+                            methods to improve bandwidth. While fruitful, this virtual discussion was not conclusive 
+                            regarding the particular method to go forward. "You need to experiment".</p>
+
+                            <h3>Approach 1:  2-way read</h3>
+<pre>
+<code>
+    inline 
+bool bit_block_or(bm::word_t* BMRESTRICT dst, 
+                  const bm::word_t* BMRESTRICT src)
+{
+#ifdef BMVECTOPT
+    return VECT_OR_BLOCK(dst, src);
+#else
+    const bm::wordop_t* BMRESTRICT wrd_ptr = (wordop_t*)src;
+    const bm::wordop_t* BMRESTRICT wrd_end = (wordop_t*)(src + bm::set_block_size);
+    bm::wordop_t* BMRESTRICT dst_ptr = (wordop_t*)dst;
+
+    bm::wordop_t acc = 0;
+    const bm::wordop_t not_acc = acc = ~acc;
+
+    do
+    {
+        acc &= (dst_ptr[0] |= wrd_ptr[0]);
+        acc &= (dst_ptr[1] |= wrd_ptr[1]);
+        acc &= (dst_ptr[2] |= wrd_ptr[2]);
+        acc &= (dst_ptr[3] |= wrd_ptr[3]);
+
+        dst_ptr+=4;wrd_ptr+=4;
+
+    } while (wrd_ptr < wrd_end);
+    return acc == not_acc;
+#endif
+}
+</code>
+</pre>
+
+                            <p><span class="image left"><img src="images/lop1.png" alt="logical OR" /></span>This is pretty straightforward logical OR on 2 blocks. 
+                            One of the arguments was that this is actually the fastest way to do things, 64-bit word should be enough 
+                            to saturate the memory channel, no other optimization is possible on top of it. 
+                            Except for cache blocking - the target block gets reused over and over again, fits L1, 
+                            saves the bandwidth. </p>
+
+                            <p>The function also uses on-the-fly saturation detection. 
+                            It detects if teh block is all 1s and stops column processing, because nothing new can be found.</p>
+
+                            <br />
+
+                            <h3>Approach 1:  2x2 way read - AVX2</h3>
+
+<pre>
+<code>
+    inline
+bool avx2_or_block(__m256i* BMRESTRICT dst,
+                   const __m256i* BMRESTRICT src)
+{
+    __m256i m1A, m1B, m1C, m1D;
+    
+    __m256i mAccF0 = _mm256_set1_epi32(~0u);
+    __m256i mAccF1 = _mm256_set1_epi32(~0u);
+    
+    __m256i* BMRESTRICT dst2 =
+        (__m256i*)((bm::word_t*)(dst) + bm::set_block_size/2);
+    const __m256i* BMRESTRICT src2 =
+        (const __m256i*)((bm::word_t*)(src) + bm::set_block_size/2);
+    const __m256i* BMRESTRICT src_end =
+        (const __m256i*)((bm::word_t*)(src) + bm::set_block_size);
+    do
+    {
+        m1A = _mm256_or_si256(_mm256_load_si256(src), _mm256_load_si256(dst));
+        m1B = _mm256_or_si256(_mm256_load_si256(src+1), _mm256_load_si256(dst+1));
+        mAccF0 = _mm256_and_si256(mAccF0, m1A);
+        mAccF0 = _mm256_and_si256(mAccF0, m1B);
+        
+        _mm256_stream_si256(dst,   m1A);
+        _mm256_stream_si256(dst+1, m1B);
+
+        src += 2; dst += 2;
+
+        m1C = _mm256_or_si256(_mm256_load_si256(src2), _mm256_load_si256(dst2));
+        m1D = _mm256_or_si256(_mm256_load_si256(src2+1), _mm256_load_si256(dst2+1));
+        mAccF1 = _mm256_and_si256(mAccF1, m1C);
+        mAccF1 = _mm256_and_si256(mAccF1, m1D);
+        
+        _mm256_stream_si256(dst2, m1C);
+        _mm256_stream_si256(dst2+1, m1D);
+
+        src2 += 2; dst2 += 2;
+    } while (src2 < src_end);
+
+    __m256i maskF = _mm256_set1_epi32(~0u);
+    mAccF0 = _mm256_and_si256(mAccF0, mAccF1);
+    __m256i wcmpA = _mm256_cmpeq_epi8(mAccF0, maskF);
+    unsigned maskA = unsigned(_mm256_movemask_epi8(wcmpA));
+    return (maskA == ~0u);
+}
+
+</code>
+</pre>
+
+                            <p><span class="image left"><img src="images/lop2.png" alt="logical OR" /></span>
+                            Same code for AVX2. Well, not exactly the same.
+                            It actually breaks the destination 8KB block in halves to run both halves “in parallel”.
+                            Some sources say that hardware fetch predictor experiences “reset” of priorities on streaming reads for every 4KB, 
+                            so running 2 sub-blocks in parallel should be slightly faster. 
+                            I cannot reliably confirm this effect, but this type of reading
+                            combined with using “stream” is not worse than plain linear SIMD unrolled function.
+                            Observations? 4KB half block read pattern does not show clear advantage.
+                            The result is not conclusive, more CPU and chipset models need to be tested to
+                            better understand possible effects here. 
+                            </p>
+
+                            <h3>Approach 3. N-way read.</h3>
+
+                            <p><span class="image left"><img src="images/lop3.png" alt="logical OR" />
+                                Since we have multiple blocks to combine into one, and have SSE2-AVX2 SIMD we can try to
+    build a multi-way bandwidth oriented operation: *dst |= *src1 | *src2 | *src3 | …
+
+This is one piece of boring, repetitive code. Optimization attempt here is based on write savings and minimization of the loop overhead. 
+It is also worth mentioning, that HW prefetch works perfectly for 2-way, 3-way operations, but 5-way is different. This is the limit, 
+where HW prefetch starts getting confused. Software prefetch on source 3 and 4 actually improves performance.
+<br />                            
+<code>
+_mm_prefetch ((const char*)src3, _MM_HINT_T0);
+_mm_prefetch ((const char*)src4, _MM_HINT_T0);
+</code>
+
+                                   Not a really big deal, but even 10% is not negligible.
+</p>
+
+
+<pre>
+<code>
+inline
+bool avx2_or_block_5way(__m256i* BMRESTRICT dst,
+                        const __m256i* BMRESTRICT src1,
+                        const __m256i* BMRESTRICT src2,
+                        const __m256i* BMRESTRICT src3,
+                        const __m256i* BMRESTRICT src4)
+{
+    __m256i m1A, m1B, m1C, m1D;
+    __m256i mAccF0 = _mm256_set1_epi32(~0u); // broadcast 0xFF
+    __m256i mAccF1 = _mm256_set1_epi32(~0u); // broadcast 0xFF
+
+    const __m256i* BMRESTRICT src_end1 =
+        (const __m256i*)((bm::word_t*)(src1) + bm::set_block_size);
+
+    do
+    {
+        m1A = _mm256_or_si256(_mm256_load_si256(src1+0), _mm256_load_si256(dst+0));
+        m1B = _mm256_or_si256(_mm256_load_si256(src1+1), _mm256_load_si256(dst+1));
+        m1C = _mm256_or_si256(_mm256_load_si256(src1+2), _mm256_load_si256(dst+2));
+        m1D = _mm256_or_si256(_mm256_load_si256(src1+3), _mm256_load_si256(dst+3));
+
+        m1A = _mm256_or_si256(m1A, _mm256_load_si256(src2+0));
+        m1B = _mm256_or_si256(m1B, _mm256_load_si256(src2+1));
+        m1C = _mm256_or_si256(m1C, _mm256_load_si256(src2+2));
+        m1D = _mm256_or_si256(m1D, _mm256_load_si256(src2+3));
+
+        m1A = _mm256_or_si256(m1A, _mm256_load_si256(src3+0));
+        m1B = _mm256_or_si256(m1B, _mm256_load_si256(src3+1));
+        m1C = _mm256_or_si256(m1C, _mm256_load_si256(src3+2));
+        m1D = _mm256_or_si256(m1D, _mm256_load_si256(src3+3));
+
+        m1A = _mm256_or_si256(m1A, _mm256_load_si256(src4+0));
+        m1B = _mm256_or_si256(m1B, _mm256_load_si256(src4+1));
+        m1C = _mm256_or_si256(m1C, _mm256_load_si256(src4+2));
+        m1D = _mm256_or_si256(m1D, _mm256_load_si256(src4+3));
+
+        _mm256_stream_si256(dst+0, m1A);
+        _mm256_stream_si256(dst+1, m1B);
+        _mm256_stream_si256(dst+2, m1C);
+        _mm256_stream_si256(dst+3, m1D);
+
+        mAccF1 = _mm256_and_si256(mAccF1, m1C);
+        mAccF1 = _mm256_and_si256(mAccF1, m1D);
+        mAccF0 = _mm256_and_si256(mAccF0, m1A);
+        mAccF0 = _mm256_and_si256(mAccF0, m1B);
+
+        src1 += 4; src2 += 4;
+        src3 += 4; src4 += 4;
+        _mm_prefetch ((const char*)src3, _MM_HINT_T0);
+        _mm_prefetch ((const char*)src4, _MM_HINT_T0);
+
+        dst += 4;
+
+    } while (src1 < src_end1);
+    
+    __m256i maskF = _mm256_set1_epi32(~0u);
+     mAccF0 = _mm256_and_si256(mAccF0, mAccF1);
+    __m256i wcmpA= _mm256_cmpeq_epi8(mAccF0, maskF);
+     unsigned maskA = unsigned(_mm256_movemask_epi8(wcmpA));
+     return (maskA == ~0u);
+}
+
+</code>
+</pre>
+</span>
+
+                            <h2>Pruning (on-the-fly block digest)</h2>
+
+                            <p>When we are doing bit-density reducing operations (AND) we can track how fast the bits 
+                            disappear from parts of our set. 8KB block constitutes 64K bits. 
+                            Thus 64-bit digest mask covers a sub-block of 1024 bits (1 bit per 1K bit).
+                            
+                            If digest bit is 0 - there is nothing there, all digest lane of 1024 bits is zero. Desaturated.
+                            One digest lane covers 4 AVX 256-bit reads (or 2 AVX-512). Note that 1 CPU cache lane is 64 bytes. 
+                            Skipping a few digest strides has noticeable effect in performance (save on reads, save on ops, save on write). 
+                            And this optimization is basically free, since we can compute and maintain the digest based on previous operation (say we have more than 10 vector blocks to combine).
+                            </p>
+
+                            <p>The nature of this optimization is based on assumption, that AND or AND-NOT operations significantly 
+                            reduce bit density. And this assumption actually works in practical search and retrieval use cases!</p>
+
+                            <p>Probably the easiest way to explain it is to take a look at the digest based on AND operation source code.
+                            First it unpacks the digest word  into list of ON bits, than performs logical operation for each digest sub-block, skipping all empty areas.
+                            </p>
+
+<pre><code>
+inline
+bool avx2_and_digest(__m256i* BMRESTRICT dst,
+                     const __m256i* BMRESTRICT src)
+{
+    __m256i m1A, m1B, m1C, m1D;
+
+    m1A = _mm256_and_si256(_mm256_load_si256(src+0), _mm256_load_si256(dst+0));
+    m1B = _mm256_and_si256(_mm256_load_si256(src+1), _mm256_load_si256(dst+1));
+    m1C = _mm256_and_si256(_mm256_load_si256(src+2), _mm256_load_si256(dst+2));
+    m1D = _mm256_and_si256(_mm256_load_si256(src+3), _mm256_load_si256(dst+3));
+
+    _mm256_store_si256(dst+0, m1A);
+    _mm256_store_si256(dst+1, m1B);
+    _mm256_store_si256(dst+2, m1C);
+    _mm256_store_si256(dst+3, m1D);
+    
+     m1A = _mm256_or_si256(m1A, m1B);
+     m1C = _mm256_or_si256(m1C, m1D);
+     m1A = _mm256_or_si256(m1A, m1C);
+
+    return _mm256_testz_si256(m1A, m1A);
+}
+ 
+inline
+bm::id64_t bit_block_and(bm::word_t* BMRESTRICT dst,
+                         const bm::word_t* BMRESTRICT src,
+                         bm::id64_t digest)
+{
+   const bm::id64_t mask(1ull);
+    
+    unsigned short bits[65];
+    unsigned bcnt = bm::bitscan_popcnt64(digest, bits);
+
+    for (unsigned i = 0; i < bcnt; ++i)
+    {
+        unsigned wave = bits[i];
+        unsigned off = wave * bm::set_block_digest_wave_size;
+        
+        #if defined(VECT_AND_DIGEST)
+            bool all_zero = bm::avx2_and_digest(&dst[off], &src[off]);
+            if (all_zero)
+                digest &= ~(mask << wave);
+        #else
+            const bm::bit_block_t::bunion_t* BMRESTRICT src_u = (const bm::bit_block_t::bunion_t*)(&src[off]);
+            bm::bit_block_t::bunion_t* BMRESTRICT dst_u = (bm::bit_block_t::bunion_t*)(&dst[off]);
+
+            bm::id64_t acc = 0;
+            unsigned j = 0;
+            do
+            {
+                acc |= dst_u->w64[j+0] &= src_u->w64[j+0];
+                acc |= dst_u->w64[j+1] &= src_u->w64[j+1];
+                acc |= dst_u->w64[j+2] &= src_u->w64[j+2];
+                acc |= dst_u->w64[j+3] &= src_u->w64[j+3];
+                j+=4;
+            } while (j < bm::set_block_digest_wave_size/2);
+        
+            if (!acc) // all zero
+                digest &= ~(mask  << wave);
+        #endif
+        
+    } // for i
+    return digest;
+}
+</code></pre>
+
+                            <p>For this optimization digest technique actually showed the best performance improvement, 
+                            especially for cases when compressed block meets uncompressed (CPU intensive with branching).
+                            </p>
+
+                            <p>Digest technique can be applied (reversed as digest of 1111s) for logical OR to detect 
+                            stride saturation. Not done yet. 
+                            Again, the assumption is that full saturation in OR happens not as often as full desaturation in AND, 
+                            because search systems tend to favor reduction models. Nonetheless, digest OR optimization 
+                            is on the TODO list.</p>
+
+                            <h2>Use cases</h2>
+
+                            <p>Aggregation as a technique has applicability in finding graph closures, processing of 
+                            bloom filters, finding common components and general purpose IR systems.</p>
+
+                            <p>One particular case, search in unordered bit-transposed vector benefits from aggregator 
+                            operation AND-SUB. <a href="http://bitmagic.io/sparse-vector-search.html">Details</a>.
+                            </p>
+
+                            <h2>Conclusions</h2>
+
+                            <p>Benchmark shows comparison of regular “horizontal” logical operations OR, AND and AND-SUB with 
+                            aggregator “vertical” method. The benchmark data is synthetic (more real tests to follow) 
+                            and can be reproduced by compiling and running of BitMagic perf utility.</p>
+
+                            <p>Looking at the benchmark data again, aggregator wins regardless of build mode, 
+                            SIMD optimizations win in both, horizontal and vertical nominations, you can see that 
+                            SSE4.2 and AVX2 are a tie for regular logical operations, and aggregator is winning at 
+                            wider SIMD registers (despite power throttling concerns with AVX2).</p>
+
+                            <p>BitMagic v.3.13.0 implements OR aggregator using N-way operations and AND (and AND-SUB) using 
+                            digest method of search space pruning. This helps to better understand the case. 
+                            Benchmarks show pruning wins over pure memory bandwidth oriented methods. 
+                            This is an important observation that should help with many similar algorithms. 
+                            Ultimate performance would call for holistic combination of bandwidth oriented methods and pruning. 
+                            SIMD helps in all cases, but adds more in combination with cache-blocking techniques.
+                            </p>
+
+                            <h3>Acknowledgements</h3>
+                            <p>Special thanks to Dmitry Kozlov (AMD) and Roman Borisov (Intel) for discussing this case, 
+                            references to manuals and support.
+                            </p>
+                            
+                            <h2>See also</h2>
+                            <ol>
+                                <li><a href="doxygen/html/classbm_1_1aggregator.html">bm::aggregator&lt;&gt;</a></li>
+                                <li><a href="doxygen/html/sample16_8cpp-example.html">Sample 16 (aggregator)</a></li>
+                                <li><a href="https://github.com/tlk00/BitMagic/tree/master/tests/perf">Benchmark tool (perf)</a></li>
+                                <li><a href="http://bitmagic.io/sparse-vector-search.html">Sparse vector search</a></li>
+                            </ol>
+
+                            </div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,173 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 5.2.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <header>
+                                <h1>Version 5.2.0</h1>
+                                <span class="date">Oct 15, 2019</span>
+                            </header>
+                            <p></p>
+                            <h2>Release Notes</h2>
+                            <ol>
+                                <li>
+                                    New version implements selective deserialization of sparse vectors.
+                                    More about this new feature in the technical application notes below.
+                                </li>
+
+                            </ol>
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic5.2.0/" class="button">Download v 5.2.0</a></p>
+
+                            <h2>Application notes on selective deserialization</h2>
+
+                            <p>
+                                Selective deserialization means that you can define elements you need to extract
+                                from the BLOB. Selected elements are going to be present in the sparse vector,
+                                all others not.
+                            </p>
+
+                            <h3>Use cases</h3>
+                            <ol>
+                                <li>
+                                    Paging algorithm when you only need a certain range of indexes (range selection).
+                                    Range deserialization schemes can be very useful for situations of memory pressure
+                                    for example WebAssembly where you only have 2GBs of addressable RAM
+                                    per WebAssembly instance and may be pressed to keep your vectors fully compressed.
+                                </li>
+
+                                <li>
+                                    Gather deserialization. Typically it is part of a bigger scheme when we run a search first,
+                                    know the exact elements which we will need for retrieval (search and retrieval scenario).
+                                </li>
+                            </ol>
+
+                            <p></p>
+                            <p>
+                                <span class="image left"><img src="images/sv_sel_deserial.png" alt="Selective Deserialization" /></span>
+
+                                Bit-vector deserialization in BitMagic implements transparent logical operations
+                                between a bit-vector and a serialized BLOB. In this case the operation to apply is
+                                AND which will mask off all bits (and blocks of bits) outside of requested range or set of ranges. Since all bit-vectors are sparse, the empty blocks will not be materialized, reducing memory consumption.
+                            </p>
+                            <p>
+                                Performance wise BitMagic will also be able to avoid decoding of at least some blocks
+                                outside of the declared target. In version 5.2.0 BitMagic cannot skip blocks
+                                decode from the start but it can stop deserialization early, when AND operation detects
+                                that there is nothing else to do downstream. If requested range happens to be closer
+                                to the beginning of a vector, selective deserialization wins in both memory and speed.
+                                In future versions this performance aspect will be improved.
+                            </p>
+                            <br /><br /><br /><br /><br /><br />
+                            <h3>
+                                BitMagic v.5.2.0 support 3 types of bit-transposed succinct sparse vectors.
+                            </h3>
+                            <p>
+                                <ol>
+                                    <li><code>bm::sparse_vector&lt;&gt;</code>  - sparse vector template for integer types</li>
+                                    <li>
+                                        <code>bm::str_sparse_vector&lt;&gt;</code> - sparse vector template for ASCIIz strings
+                                    </li>
+                                    <li>
+                                        <code>bm::rsc_sparse_vector&lt;&gt;</code> - succinct sparse vector for integer types
+                                        with rank-select compression of NULL values
+                                    </li>
+                                </ol>
+                            </p>
+                            <p>
+                                All 3 sparse vectors support range and gather deserialization using AND masking. 
+                                While it is rather straight forward to implement for first two cases, Rank-Select 
+                                compressed vector requires recalculation of a mask into compressed coordinates 
+                                which makes gather operation a bit more expensive.
+                                Current performance is practical but leaves some room for later optimizations.
+                            </p>
+
+                            <h2>Code examples</h2>
+
+                            <ol>
+                                <li><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svsample08">svsample08</a></li>
+                                <li><a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample05">strsvsample05</a></li>
+                                <li><a href="https://github.com/tlk00/BitMagic/tree/master/samples/rscsample02">rscsample02</a></li>
+                            </ol>
+
+                        </section>
+					</section>
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

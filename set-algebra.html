@@ -1,0 +1,1119 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Algebra of Sets</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+<body>
+    <!-- Header -->
+    <header id="header">
+        <!-- Logo -->
+        <span class="logo">
+            <a href="index.html">BitMagic</a>
+            <span>Library</span>
+        </span>
+        <!-- Nav -->
+        <nav id="nav">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li>
+                    <a href="#" class="icon fa-angle-down">Documentation</a>
+                    <ul>
+                        <li><a href="getting-started.html">Getting started</a></li>
+                        <li><a href="design.html">Design</a></li>
+                        <li><a href="apis.html">API Reference</a></li>
+                        <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                        <li><a href="release-notes.html">Release Notes</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#" class="icon fa-angle-down">Articles</a>
+                    <ul>
+                        <li><a href="use-case.html">Use cases</a></li>
+                        <li><a href="articles.html">Technical notes</a></li>
+                    </ul>
+                </li>
+                <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+            </ul>
+        </nav>
+        <!-- Nav -->
+    </header>
+    <!-- Wrapper -->
+    <div class="wrapper">
+        <!-- Main -->
+        <section class="main">
+            <h1>Algebra or Sets and Logical operations </h1>
+            <h5>Jan 2019 </h5>
+            <section>
+                <div class="row">
+                    <div class="6u 12u$(small)">
+                        <h3>Introduction</h3>
+                        <p>
+                            Algebra of sets and logical computing is a backbone and the engine of BitMagic library.
+                            This document will provide an overview of set and logical operations, truth tables,
+                            venn diagrams, notes on use cases and patterns.
+                            Efficient implementation of algebra of sets assumes that sets are represented as sorted arrays of
+                            unsigned integers. BitMagic also implements Compressed Algebra of Sets, where source set is
+                            compressed serialized BLOB.
+                        </p>
+
+                        <p>
+                            Algebra of sets is traditionally used in Information Retrieval systems (inverted indexes) and DataBase management
+                            to implement fast logical queries based on AND, OR, NOT boolean logic. Another application is
+                            AI tasks related to classifications and clutering (unsuperwised learning).
+                        </p>
+
+                        <p>All these applications need performance and memory efficiency.</p>
+
+                    </div>
+                    <div class="4u 12u$(medium)">
+                        <h3>Why bit-vectors?</h3>
+
+                        <p>
+                            Integer sets can be equivalently presented as bit-vectors to allow fast and SIMD
+                            parallel operations on sets using boolean algebra. Boolean algebra denotes truth valeus: "true"(1)
+                            or "false" (0), which maps into bit-values of a vector. A set can be represented as a
+                            sequence of bits. Plain bit-vectors are not always memory effcient for sparse or dense cases,
+                            to address this BitMagic uses adaptive compression, which is transparent, all set
+                            operations just work.
+                        </p>
+
+                        <p>
+                            Logical operations on bits, are very fast and love wide SIMD registers but SIMD alone is not
+                            a silver buller. Bitmap operations are very often memory bound, so wide SIMD regaiters cannot be used
+                            effciently. BitMagic library offers a robust set of logical programming operations to efficiently re-use
+                            resources: RAM, CPU cache, memory bandwidth.
+                        </p>
+
+                    </div>
+
+                </div>
+                <hr class="major" />
+
+                <p>
+                    Algebra of Sets is a relatively simple thing and can be fully implemented on just a few operations:
+                    set assignment(s), AND, OR, NOT.
+                    Implementation of various logical compute patterns in BitMagic produced a reach set of APIs and
+                    requires a tutorial to explain use cases.
+                </p>
+
+                <h3>Logical API groups and general usage patterns</h3>
+
+                <ol>
+                    <li>
+                        Basic 2-operand logical operations on vectors (OR, AND, MINUS, etc).
+                        <code>VectorA = VectorA OPERATION VectorB.</code>
+                    </li>
+
+                    <li>
+                        3-operand logical operations on vectors.
+                        <code>Target = ArgA OPERATION ArgB.</code> Source operands are immutable in this case.
+                        Operations of this type can also fuse an optimization/compression step
+                    </li>
+
+                    <li>
+                        Operations between vector and list of integers (sorted or unsorted set). Mutable, changes the target vector.
+                        It is very often used for loading content from an STL container, C-arrays. Typical use case here is index
+                        construction. It can be also used for cases, when keeping a whole bit-vector is ineffcient (small integer lists),
+                        but final result needs a logical operation.
+                    </li>
+
+                    <li>
+                        Operations between vector and serialized BLOB. Indexes and sets do not sit im memory all the time,
+                        BitMagic containers (all not just bvector<>) can be be saved and restored as a BLOB. Deserialization
+                        can be fused with a logical operation (memory efficiency, minimizes memory copying).
+                        Logical operations with a BLOB are based on operation codes, which makes it easy to build an SQL-like query language
+                        interpetor.
+                    </li>
+
+                    <li>
+                        Fast aggregator (<code>bm::aggregator&lt;&gt;</code>). Aggregator is used when we need to run an operation
+                        on groups of vectors. Aggregator uses optimization techniques to prune the search space and minimize memory
+                        access. The best usage pattern here when we can have many (say more than 5) vectors or groups of vectors. Aggregator allocates its own
+                        temporary memory so the best usage model here is to create it once (per thread) and reuse it to run various
+                        operations on bit-vector groups. BitMagic library uses aggregator for searches in bit-transposed sparse matrices.
+                        <p>
+                            Aggregator has an option to perform on-the-fly optimization(compression) of the result vector,
+                            which is faster than a separate call to <code>bvector&lt;&gt;::optimize()</code>.
+                        </p>
+                    </li>
+                </ol>
+
+                <h4>Why so many different ways to do the same?</h4>
+
+                <p>
+                    Short answer: performance and convinience.
+                    Different use cases need different patterns and API implementations.
+                </p>
+
+                <p>
+                    Logical bit-wise operations rely on very basic and very fast hardware.
+                    There should be a compelling reason to have different APIs to do over-engineering like this?
+                </p>
+
+                <p>
+                    Top performance is needed for a few reasons.
+                    <ul>
+                        <li>
+                            Full scale search systems often set a time budget, which is human factor. How long user wants to wait?
+                            Very often results need to be ready within hundreds of milliseconds. Fast system can evaluate multiple
+                            search hypothesis and combinations of logical formulas "cats AND dogs", "cats OR dogs", "cats BUT NOT dogs", etc.
+                            To see what is more relevant to the query. Fast speed can be translated into better, more relevant results.
+                            Smarter system.
+                        </li>
+
+                        <li>
+                            Better ranking. Again, this is about search budget. Logical search phase on inverted indexes would often
+                            require result set ranking to bring the most relevant data on top. Without touching details of ranking algorithms,
+                            this pahse can be expensive (yet important) so it is important to finish the preliminary search space reduction faster.
+                            Ranking algorithms itself may use logical operations and binary classifiers to understand how search results
+                            cluster, fast loical operations are helpful here as well.
+                        </li>
+
+                        <li>
+                            In the absense of fast implementation search systems often need to truncate results, say, we find only first
+                            100. It is fine in many cases, but it is a lot more convenient if search is capable of bringing
+                            the whole results set (as a compressed vector) so that later stage (ranking or something else) can pick
+                            ten best out of thousands, not one hundred or work on the whole complete result set if it needs to.
+                            For example, later stage may be not ranking but big data visualization capable of its own data reduction
+                            and display techniques to show a meaningful representation of search result set. Search set truncation makes
+                            such scenarious hard.
+                        </li>
+                    </ul>
+
+                    High performance in many ways leads to better Data Science.
+                </p>
+
+                <h3>Quick example</h3>
+                <p>
+                    <span class="image left"><img src="images/bench/3OR_bench.png" alt="3-operand OR performance benchmark" /></span>
+                </p>
+                <p>
+                    This example (part of BitMagic performance benchmark) a difference in 2-operand and 3-operand set union
+                    (logical OR). Example shows how to do functionally equivalent operations but 3-operand logic works faster in this case,
+                    because it fuses multiple operations (copy, OR and optimize).
+                    Variety of logial operations gives the right tool for every use case.
+                </p>
+
+
+<pre><code>
+#include "bm.h"
+void OrTest()
+{
+    bm::bvector<> bv1, bv2;
+    bm::bvector<> bvt1, bvt2;
+    generate_bvector(bv1, 40000000, false);
+    generate_bvector(bv2, 40000000, false);
+
+    {
+        TimeTaker tt("OR-optimize (2 operand) bvector test", REPEATS*4);
+        for (unsigned i = 0; i < REPEATS*4; ++i)
+        {
+            bvt1 = bv1;
+            bvt1 |= bv2;
+            bvt1.optimize();
+        }
+    }
+
+    {
+        TimeTaker tt("OR-optimize (3 operand) bvector test", REPEATS*4);
+        for (unsigned i = 0; i < REPEATS*4; ++i)
+        {
+            bvt2.bit_or(bv1, bv2, bvect::opt_compress);
+        }
+    }
+}
+</code></pre>
+
+                <h3>Subset, supersets, cardinality and dimentionality of bit-vector based sets</h3>
+
+                <p>
+                    Before going farther with API description lets discuss a few assumptions of BitMagic library.
+                    By default <code>bvector&lt;&gt;</code> does not require you to specify its size. The sparse vector usage model
+                    is based on automatic memory management (somewhat similar to STL map&lt;&gt;) where you just load your set
+                    and container takes care of the memory management.
+                </p>
+
+                <p>
+                    Set cardinality on bitsets is defined as population count <code>bvector&lt;&gt;::count()</code>.
+                </p>
+
+                <p>
+                    It is assumed that all our sets are really sub-sets of a super set U with a maximum cardinality of
+                    2^31-1 (32-bit space). If you invert an empty bit-set - you get a superset (all bits are set to 1).
+                </p>
+
+                <p>
+                    In some cases you don't need or want to operate on a full superset power.
+                    bvector<> has a resize() function, which you can use to set the maximum size (not cardinality).
+                    Set size defines the maximum element.
+                </p>
+
+                <p>
+                    It should be noted, that explicitly setting the size does not save you much memory it is not a
+                    resource management thing. In terms of algebra of sets you are defining maximum possible cardinality or just
+                    size of your superset.
+                </p>
+
+                <h4>Operations on sets of reduced cardinality</h4>
+
+                <p>
+                    Invert will only flip the bits in the closed range of [0..size()-1].
+                    Other operations (OR, AND) will take size into account and automatically resize the target to the maximum of all
+                    arguments (maximum superset).
+                </p>
+
+                <p>
+                    A question to ask here is why AND has to extend the superset, while it is clear (and even axiomatic)
+                    that sub-set intersection of small set with a bigger sub-set is always empty?
+                    Automatic extencion was done to make a clear rule of managing super-sets: the largest super-set defines the
+                    dimentionality, regardless of the operation we use on it.
+                </p>
+
+                <p>Quick recap</p>
+
+                <ol>
+                    <li><code>bvector<>::size()</code> returns dimentionality (default is full 32-bit space)</li>
+                    <li><code>bvector<>::count()</code> returns cardinality (actual number of elements in the set)</li>
+                    <li>
+                        Logical operations change the size (dimentionality) to be maximum of operands even if cardinality
+                        gets reduced
+                    </li>
+                    <li>Logical operations change the cardinality based on logical truth tables of a particular operation</li>
+                </ol>
+
+            </section>
+
+            <section>
+                <h2>Set Union (OR)</h2>
+
+                <h3>Logical disjunction (OR) truth table</h3>
+
+                <div class="table-wrapper style="max-width:200px;">
+                    <div class="6u">
+                        <p>
+                            <span class="image right"><img src="images/sa/sa_or.png" alt="set union venn diagram" /></span>
+                        </p>
+                    </div>
+                    <table class="alt" style="max-width:200px;" title="OR truth table">
+                        <thead>
+                            <tr>
+                                <th>A</th>
+                                <th>B</th>
+                                <th>A OR B</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>0</td>
+                                <td>0</td>
+                                <td>0</td>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td>1</td>
+                                <td>1</td>
+                            </tr>
+                            <tr>
+                                <td>1</td>
+                                <td>0</td>
+                                <td>1</td>
+                            </tr>
+                            <tr>
+                                <td>0</td>
+                                <td>1</td>
+                                <td>1</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+
+
+                <div class="table-wrapper">
+                    <table class="alt">
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Notes</th>
+                                <th>#include</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>bvector<>::bit_or(bv1)</td>
+                                <td>
+                                    Set union: <code>A = A OR B </code> This is the most basic set OR operation
+                                    where destination vector is also one source operand.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.bit_or(bv_B); // 1, 2, 3, 4
+</code></pre>
+                                </td>
+                                <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                            </tr>
+
+                            <tr>
+                                <td>bvector<>::bit_or(bv1, bv2)</td>
+                                <td>
+                                    Set union: <code>T = A OR B </code> This is 3-operand OR
+                                    where destination vector is a product of two arguments.
+                                    Arguments are const / immutable. Function allows to fuse
+                                    together assignment, logical operation and optimization/compression of
+                                    the target vector.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bm::bvector<>   bv_T;
+bv_T.bit_or(bv_A, bv_B, bm::bvector<>::opt_compress); // 1, 2, 3, 4
+</code></pre>
+                                </td>
+                                <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                            </tr>
+
+                            <tr>
+                                <td>bvector<>::combine_operation(bv1, opcode)</td>
+                                <td>
+                                    Set union via operation code BM_OR: <code>A = A opcode B </code>.
+                                    Same as <code>bvector<>::bit_or()</code> but uses operation code
+                                    (convineince for building a logical interpeter).
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.combine_operation(bv_B, bm::BM_OR);
+</code></pre>
+                                </td>
+                                <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                            </tr>
+                            <tr>
+                                <td>operation_deserializer<>::deserialize(bv_T, BLOB, temp_block, opcode)</td>
+                                <td>
+                                    Set union via operation code bm::set_OR: <code>A = A opcode BLOB </code>.
+                                    This method fuses de-serialization with a logical operation which is faster
+                                    than deserialization and subsequent operation. BLOB - serialized bit-vector.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+vector<unsigned char> blob;
+    {
+        bm::bvector<>   bv_B { 1, 2, 4 };
+        make_BLOB(blob, bv_B);
+    }
+bm::operation_deserializer&lt;bm::bvector&lt;&gt; > od;
+od.deserialize(bv_A, blob.data(), bm::set_OR);
+</code></pre>
+                                </td>
+                                <td><a href="doxygen/html/classbm_1_1operation__deserializer.html">bmserial.h</a></td>
+                            </tr>
+                            <tr>
+                                <td>bm::combine_or(bv_T, it_start, it_end)</td>
+                                <td>
+                                    Set union between bit-vector and an integer list: <code>A = A OR {list-of-ints} </code>.
+                                    This method sets all list elements as bits in the target bit-vector.
+                                    Compatible with STL iterators.
+<pre><code>
+bm::bvector<>    bv_A { 1, 2, 3 };
+vector<unsigned> vect_B { 1, 2, 4 };
+bm::combine_or(bv_A, vect_B.begin(), vect_B.end());
+</code></pre>
+                                </td>
+                                <td>bmalgo.h</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>bvector<>::set(C-array, size, sort_hint)</td>
+                                <td>
+                                    Set union between bit-vector and an integer list: <code>A = A OR {list-of-ints} </code>.
+                                    This method sets all list elements as bits in the target bit-vector.
+                                    Takes C-style array, faster more direct method to load external array.
+<pre><code>
+bm::bvector<>     bv_A { 1, 2, 3 };
+vector<unsigned>  vect_B { 1, 2, 4 };
+
+const unsigned* arr = &vect_B[0];
+bv_A.set(arr, unsigned(vect_B.size()), bm::BM_SORTED); // sorted - fastest
+</code></pre>
+
+                                </td>
+                                <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                            </tr>
+                            <tr>
+                                <td>aggregator<>::combine_or()</td>
+                                <td>
+                                    Set union for a group of bit-vectors <code>A = OR(list-of-vectors) </code>.
+                                    Optimized method to union a group of vectors. Result can be automatically
+                                    on the fly optimized/compressed, which is faster than a separate optimize call.
+<pre><code>
+bm::bvector<>    bv_T; // target vector
+
+bm::bvector<>    bv_A { 1, 2 };
+bm::bvector<>    bv_B { 2, 3 };
+bm::bvector<>    bv_C { 3, 4 };
+
+bm::aggregator&lt;bm::bvector&lt;&gt; &gt; agg;
+agg.set_optimization(); // perform on-the-fly optimization of result
+
+// attach vectors to group 0 for OR operation
+agg.add(&bv_A);
+agg.add(&bv_B);
+agg.add(&bv_C);
+
+agg.combine_or(bv_T); // 1, 2, 3, 4
+</code></pre>
+                                </td>
+                                <td><a href="doxygen/html/classbm_1_1aggregator.html">bmaggregator.h</a></td>
+                            </tr>
+                            <tr>
+                                <td>bvector<>::merge(bv1)</td>
+                                <td>
+                                    Merge operation is a special case 2-operand OR.
+                                    It can destroy the source vector to borrow memory blocks from it, both operands are mutable.
+                                    Moving memory is faster. Use case here is multi-threade map-reduce at the reduce stage, where
+                                    partial results are no longer needed.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.merge(bv_B); // 1, 2, 3, 4, content of bv_B is not guaranteed to be preserved
+</code></pre>
+                                </td>
+                                <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+
+
+            </section>
+
+
+            <h2>Set Intersect (AND)</h2>
+
+
+            <h3>Logical conjunction (AND) truth table</h3>
+            <div class="6u">
+                <p>
+                    <span class="image right"><img src="images/sa/sa_and.png" alt="set intersect venn diagram" /></span>
+                </p>
+            </div>
+
+            <div class="table-wrapper" style="max-width:200px;">
+                <table class="alt" title="AND truth table">
+                    <thead>
+                        <tr>
+                            <th>A</th>
+                            <th>B</th>
+                            <th>A AND B</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>0</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>1</td>
+                            <td>0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <div class="table-wrapper">
+                <table class="alt">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Notes</th>
+                            <th>#include</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>bvector<>::bit_and(bv1)</td>
+                            <td>
+                                Set union: <code>A = A AND B </code> This is the most basic set AND operation
+                                where destination vector is also one source operand.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.bit_and(bv_B); // 1, 2
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>bvector<>::combine_operation()</td>
+                            <td>
+                                Set union via operation code BM_AND: <code>A = A opcode B </code>.
+                                Same as <code>bvector<>::bit_and()</code> but uses operation code
+                                (convineince for building a logical interpeter).
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.combine_operation(bv_B, bm::BM_AND);
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>operation_deserializer<>::deserialize()</td>
+                            <td>
+                                Set union via operation code bm::set_OR: <code>A = A opcode BLOB </code>.
+                                This method fuses de-serialization with a logical operation which is faster
+                                than deserialization and subsequent operation. BLOB - serialized bit-vector.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+vector<unsigned char>
+    blob;
+    {
+    bm::bvector<>   bv_B { 1, 2, 4 };
+    make_BLOB(blob, bv_B);
+    }
+    
+    bm::operation_deserializer&lt;bm::bvector&lt;&gt; > od;
+    od.deserialize(bv_A, blob.data(), bm::set_AND);
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1operation__deserializer.html">bmserial.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>bm::combine_and()</td>
+                            <td>
+                                Set union between bit-vector and an integer list: <code>A = A AND {list-of-ints} </code>.
+                                This method sets all list elements as bits in the target bit-vector.
+                                Compatible with STL iterators.
+<pre><code>
+bm::bvector<>    bv_A { 1, 2, 3 };
+vector<unsigned> vect_B { 1, 2, 4 };
+bm::combine_and(bv_A, vect_B.begin(), vect_B.end());
+</code></pre>
+                            </td>
+                            <td>bmalgo.h</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>bvector<>::keep(...)</td>
+                            <td>
+                                Set union between bit-vector and an integer list: <code>A = A AND {list-of-ints} </code>.
+                                This method sets all list elements as bits in the target bit-vector.
+                                Takes C-style array, faster more direct method to load external array.
+<pre><code>
+bm::bvector<>     bv_A { 1, 2, 3 };
+vector<unsigned>  vect_B { 1, 2, 4 };
+
+const unsigned* arr = &vect_B[0];
+bv_A.keep(arr, unsigned(vect_B.size()), bm::BM_SORTED); // sorted - fastest
+</code></pre>
+
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>aggregator<>::combine_and()</td>
+                            <td>
+                                Set union for a group of bit-vectors <code>A = AND(list-of-vectors) </code>.
+                                Optimized method to union a group of vectors. Result can be automatically
+                                on the fly optimized/compressed, which is faster than a separate optimize call.
+<pre><code>
+bm::bvector<>    bv_T; // target vector
+
+bm::bvector<>    bv_A { 1, 2 };
+bm::bvector<>    bv_B { 1, 2, 3 };
+bm::bvector<>    bv_C { 1, 2, 3, 4 };
+
+bm::aggregator&lt;bm::bvector&lt;&gt; &gt; agg;
+agg.set_optimization(); // perform on-the-fly optimization of result
+
+// attach vectors to group 0 for OR operation
+agg.add(&bv_A);
+agg.add(&bv_B);
+agg.add(&bv_C);
+
+agg.combine_and(bv_T); // 1, 2
+
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1aggregator.html">bmaggregator.h</a></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+
+
+
+
+
+            <h2>Set Complement (Negation) (NOT)</h2>
+
+            <h3>Logical inversion (NOT) truth table</h3>
+            <div class="4u">
+                <p>
+                    <span class="image right"><img src="images/sa/sa_not.png" alt="set negation venn diagram" /></span>
+                </p>
+            </div>
+
+            <div class="table-wrapper" style="max-width:200px;">
+                <table class="alt" title="NOT truth table">
+                    <thead>
+                        <tr>
+                            <th>A</th>
+                            <th>NOT A</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <br />
+
+            <div class="table-wrapper">
+                <table class="alt">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Notes</th>
+                            <th>#include</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>bvector<>::invert()</td>
+                            <td>
+                                Set union: <code>A = NOT A</code>
+                                Mutable, non-const NOT, changes the object, flips all the bits.
+<pre><code>
+{
+    bm::bvector<>   bv_A { 4, 5, 6  };
+    bv_A.invert(); // 0, 1, 2, 3, 7 ...
+}
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+
+
+
+            <h2>Set subtraction (AND NOT)</h2>
+
+            <h3>Subtraction (AND NOT) truth table</h3>
+
+            <div class="6u">
+                <p>
+                    <span class="image right"><img src="images/sa/sa_sub.png" alt="set subtraction venn diagram" /></span>
+                </p>
+            </div>
+
+            <div class="table-wrapper" style="max-width:200px;">
+                <table class="alt" title="AND NOT truth table">
+                    <thead>
+                        <tr>
+                            <th>A</th>
+                            <th>B</th>
+                            <th>A AND NOT B</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>0</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>1</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="alt">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Notes</th>
+                            <th>#include</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>bvector<>::bit_sub(bv1)</td>
+                            <td>
+                                Set subtraction: <code>A = A AND NOT B </code> This is the most basic set SUB operation
+                                where destination vector is also one source operand.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.bit_sub(bv_B); // 3
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+
+                        <tr>
+                            <td>bvector<>::bit_sub(bv1, bv2)</td>
+                            <td>
+                                Set subtraction: <code>T = A AND NOT B </code> This is 3-operand SUB
+                                where destination vector is a product of two arguments.
+                                Arguments are const / immutable. Function allows to fuse
+                                together assignment, logical operation and optimization/compression of
+                                the target vector.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bm::bvector<>   bv_T;
+bv_T.bit_sub(bv_A, bv_B, bm::bvector<>::opt_compress); // 3
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+
+                        <tr>
+                            <td>bvector<>::combine_operation(bv1, opcode)</td>
+                            <td>
+                                Set subtraction via operation code BM_SUB: <code>A = A opcode B </code>.
+                                Same as <code>bvector<>::bit_or()</code> but uses operation code
+                                (convineince for building a logical interpeter).
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.combine_operation(bv_B, bm::BM_SUB);
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>operation_deserializer<>::deserialize(bv_T, BLOB, temp_block, opcode)</td>
+                            <td>
+                                Set subtraction via operation code bm::set_OR: <code>A = A opcode BLOB </code>.
+                                This method fuses de-serialization with a logical operation which is faster
+                                than deserialization and subsequent operation. BLOB - serialized bit-vector.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+vector<unsigned char>
+blob;
+{
+    bm::bvector<>   bv_B { 1, 2, 4 };
+    make_BLOB(blob, bv_B);
+}
+bm::operation_deserializer&lt;bm::bvector&lt;&gt; > od;
+od.deserialize(bv_A, blob.data(), bm::set_SUB);
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1operation__deserializer.html">bmserial.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>bm::combine_sub(bv_T, it_start, it_end)</td>
+                            <td>
+                                Set union between bit-vector and an integer list: <code>A = A SUB {list-of-ints} </code>.
+                                This method sets all list elements as bits in the target bit-vector.
+                                Compatible with STL iterators.
+<pre><code>
+bm::bvector<>    bv_A { 1, 2, 3 };
+vector<unsigned> vect_B { 1, 2, 4 };
+bm::combine_sub(bv_A, vect_B.begin(), vect_B.end());
+</code></pre>
+                            </td>
+                            <td>bmalgo.h</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>bvector<>::clear(C-array, size, sort_hint)</td>
+                            <td>
+                                Set subtraction between bit-vector and an integer list: <code>A = A SUB {list-of-ints} </code>.
+                                This method sets all list elements as bits in the target bit-vector.
+                                Takes C-style array, faster more direct method to load external array.
+<pre><code>
+bm::bvector<>     bv_A { 1, 2, 3 };
+vector<unsigned>  vect_B { 1, 2, 4 };
+
+const unsigned* arr = &vect_B[0];
+bv_A.clear(arr, unsigned(vect_B.size()), bm::BM_SORTED); // sorted - fastest
+</code></pre>
+
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>aggregator<>::combine_and_sub()</td>
+                            <td>
+                                Aggregator AND-SUB works on two groups of arguments: first group
+                                is ANDed (set intersect) and second group is subtracted from the AND result.
+                                The first group can consist of just one vector and this would be an equivalent of AND NOT.
+
+                                Result can be automatically on the fly optimized/compressed, which is faster than a separate
+                                optimize call.
+
+<pre><code>
+bm::bvector<>    bv_T; // target vector
+
+bm::bvector<>    bv_A { 1, 2, 3, 4 };
+bm::bvector<>    bv_B { 1, 2 };
+bm::bvector<>    bv_C { 1, 2, 4 };
+bm::bvector<>    bv_D { 0, 2, 3, 4, 5 };
+
+
+bm::aggregator<bm::bvector<> > agg;
+agg.set_optimization(); // perform on-the-fly optimization of result
+
+// here we are really using AND SUB operation
+// where group 0 is all ANDed and group 1 SUBtracted from the result
+//
+agg.add(&bv_A, 0); // add to group 0 for AND
+agg.add(&bv_D, 0); //
+
+agg.add(&bv_B, 1); // add to group 1 SUB tract from group 0 result
+agg.add(&bv_C, 1);
+
+agg.combine_and_sub(bv_T);
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1aggregator.html">bmaggregator.h</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+            <h2>Exclusive disjunction (XOR)</h2>
+
+            <h3>XOR truth table</h3>
+
+            <div class="6u">
+                <p>
+                    <span class="image right"><img src="images/sa/sa_xor.png" alt="set exclusive or venn diagram" /></span>
+                </p>
+            </div>
+
+            <div class="table-wrapper" style="max-width:200px;">
+                <table class="alt" title="XOR truth table">
+                    <thead>
+                        <tr>
+                            <th>A</th>
+                            <th>B</th>
+                            <th>A XOR B</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0</td>
+                            <td>0</td>
+                            <td>0</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>0</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>1</td>
+                            <td>1</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>1</td>
+                            <td>0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+
+
+            <div class="table-wrapper">
+                <table class="alt">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Notes</th>
+                            <th>#include</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>bvector<>::bit_xor(bv1)</td>
+                            <td>
+                                Exclusive disjunction: <code>A = A XOR B </code> This is the most basic set XOR operation
+                                where destination vector is also one source operand.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.bit_xor(bv_B); // 3, 4
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+
+                        <tr>
+                            <td>bvector<>::bit_xor(bv1, bv2)</td>
+                            <td>
+                                Exclusive disjunction: <code>T = A XOR B </code> This is 3-operand XOR
+                                where destination vector is a product of two arguments.
+                                Arguments are const / immutable. Function allows to fuse
+                                together assignment, logical operation and optimization/compression of
+                                the target vector.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bm::bvector<>   bv_T;
+bv_T.bit_xor(bv_A, bv_B, bm::bvector<>::opt_compress); // 3, 4
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+
+                        <tr>
+                            <td>bvector<>::combine_operation(bv1, opcode)</td>
+                            <td>
+                                Exclusive disjunction via operation code BM_XOR: <code>A = A opcode B </code>.
+                                Same as <code>bvector<>::bit_xor()</code> but uses operation code
+                                (convineince for building a logical interpeter).
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+bm::bvector<>   bv_B { 1, 2, 4 };
+bv_A.combine_operation(bv_B, bm::BM_XOR);
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1bvector.html">bm.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>operation_deserializer<>::deserialize(bv_T, BLOB, temp_block, opcode)</td>
+                            <td>
+                                Set union via operation code bm::set_OR: <code>A = A opcode BLOB </code>.
+                                This method fuses de-serialization with a logical operation which is faster
+                                than deserialization and subsequent operation. BLOB - serialized bit-vector.
+<pre><code>
+bm::bvector<>   bv_A { 1, 2, 3 };
+vector<unsigned char> blob;
+{
+    bm::bvector<>   bv_B { 1, 2, 4 };
+    make_BLOB(blob, bv_B);
+}
+bm::operation_deserializer&lt;bm::bvector&lt;&gt; > od;
+od.deserialize(bv_A, blob.data(), bm::set_XOR);
+</code></pre>
+                            </td>
+                            <td><a href="doxygen/html/classbm_1_1operation__deserializer.html">bmserial.h</a></td>
+                        </tr>
+                        <tr>
+                            <td>bm::combine_xor(bv_T, it_start, it_end)</td>
+                            <td>
+                                Exclusive disjunction between bit-vector and an integer list:
+                                <code>A = A XOR {list-of-ints} </code>.
+                                This method sets all list elements as bits in the target bit-vector.
+                                Compatible with STL iterators.
+<pre><code>
+bm::bvector<>    bv_A { 1, 2, 3 };
+vector<unsigned> vect_B { 1, 2, 4 };
+bm::combine_xor(bv_A, vect_B.begin(), vect_B.end());
+</code></pre>
+                            </td>
+                            <td>bmalgo.h</td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <h2>Tutorial example</h2>
+
+            <p>All APIs and examples provided in this tutorial are available:
+            <p>
+                <a href="doxygen/html/bvsetalgebra_8cpp-example.html">Doxygen formatted example</a>
+            </p>
+            <p>
+                <a href="https://github.com/tlk00/BitMagic/tree/master/samples/bvsetalgebra">GitHub example</a>
+            </p>
+
+
+            <h2>References</h2>
+            <ol>
+                <li>
+                    <a href="https://cs.brown.edu/courses/cs022/static/files/documents/sets.pdf">Set Itentiites</a>
+                </li>
+            </ol>
+
+
+
+        </section>
+
+    </div>
+
+
+
+
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div class="copyright">
+            &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+        </div>
+    </footer>
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/skel.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/jquery.dropotron.min.js"></script>
+    <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

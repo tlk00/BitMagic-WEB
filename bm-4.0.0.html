@@ -1,0 +1,113 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 4.0.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <header>
+                                <h1>Version 4.0.0</h1>
+                                <span class="date">June 30, 2019</span>
+                            </header>
+                            <p></p>
+                            <h2>Release Notes</h2>
+                            <ol>
+                                <li>
+                                    Implemented 64-bit address mode for indexing problems with more than 4 billion elements.
+                                    <code>#define BM64ADDR</code> to enable the new mode or use <code>#include bm64.h</code>.
+                                    Known limitations: it only supports 48-bit (2^48-1) elements, you cannot use both 32-bit and 
+                                    64-bit address modes in one compile unit (implementation is based on pre-processor)
+                                </li>
+
+                                <li>
+                                    Added new example to explain how to enable 64-bit mode.
+                                    <a href="https://github.com/tlk00/BitMagic/blob/master/samples/bvsample01_64/bvsample01_64.cpp" >Example</a></p>
+                                </li>
+
+                                <li>Added <code>bm::bvector&lt;&gt;::erase()</code> method to delete a bit in bit-vector</li>
+
+                                <li>Added <code>bm::bvector&lt;&gt;::shift_left()</code> method to shift the whole vector by 1 bit to the left
+                                </li>
+                            </ol>
+                                <br />
+                                <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic4.0.0/" class="button">Download v 4.0.0</a></p>
+                        </section>
+					</section>
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

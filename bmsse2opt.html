@@ -1,0 +1,361 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>SSE2 performance optimization</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul>
+							<li><a href="index.html">Home</a></li>
+							<li>
+								<a href="#" class="icon fa-angle-down">Documentation</a>
+								<ul>
+                                    <li><a href="getting-started.html">Getting started</a></li>
+                                    <li><a href="design.html">Design</a></li>
+                                    <li><a href="apis.html">API Reference</a></li>
+                                    <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+									<li><a href="use-case.html">Use cases</a></li>
+                                    <li><a href="release-notes.html">Release Notes</a></li>
+								</ul>
+							</li>
+                            <li><a href="articles.html">Articles</a></li>
+							<li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+							<li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+						</ul>
+					</nav>
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>SSE2 optimization</h1>
+                            <p>Anatoliy Kuznetsov. 2003.</p>
+                            
+<h3>Introduction</h3>
+	
+	<p>Current x86 processors from Intel and AMD include support for additional set of
+<b>single instruction multiple data</b> (SIMD) commands. What is SIMD? It's a way of getting your CPU to do more work with less instructions.
+Ultimately it means the program code is becoming more compact and often works faster.
+</p>
+
+<h3>How SIMD works?</h3>
+Imagine that you have two arrays and you need to add one to another element by element. 
+</p>
+<p align="center"><img src="images/nonsimdadd.gif" alt="NonSIMD" border="0" align="center"></p>
+<p align="center"><strong>Fig. 1. Adding arrays traditional way.</strong></p>
+
+<p>Simple as 1-2-3, isn't it? We are loading array elements one by one into the CPU registers 
+and adding numbers. All arithmetic is contained in one loop.  
+</p>
+
+<p>The problem is that for every add operation inside the loop we one loop condition comparison.
+For long loops this one to one overhead must be eliminated.
+When we optimize this for performance the first thing we do is loop unrolling. 
+Unrolling reduces loop overhead and boosts performance.
+</p>
+
+<p>SIMD is designed to give us even better performance in vector operations. 
+</p>
+
+<p align="center"><img src="images/simdadd.gif" alt="NonSIMD" border="0" align="center"></p>
+<p align="center"><strong>Fig. 2. Vectorized operation.</strong></p>
+
+<p>In a SIMD enabled CPU we are equipped with extended, special purpose registers
+capable of loading several machine words and performing operations on all of them in
+<b>parallel</b>. For example SSE2 command set is capable of adding 4 32-bit or 8 16-bit machine 
+words at once.
+</p>
+
+<h3>Optimization of bitwise operations using SSE2 integer arithmetic</h3>
+
+<p>SSE2 provides vector instructions for all bitwise operations like AND, OR, XOR or shifts.
+That makes it perfectly suitable for implementing bitsets. BM library uses compiler <b>intrinsics</b>
+to access SIMD functionality. Intrinsics give performance close to assemly language. 
+Intel C++ or MS Visual C++ v.7.0 both support MMX/SSE/SSE2 extensions.
+</p>
+
+<p>Here come small code fragment to AND two int-based bitsets.</p>
+<pre>
+void bit_operation_and(unsigned* dst, const unsigned* src, unsigned block_size)
+{
+      const __m128i* wrd_ptr = (__m128i*)src;
+      const __m128i* wrd_end = (__m128i*)(src + block_size);
+      __m128i* dst_ptr = (__m128i*)dst;
+
+      do
+      {
+           __m128i xmm1 = _mm_load_si128(wrd_ptr);
+           __m128i xmm2 = _mm_load_si128(dst_ptr);
+                
+           __m128i xmm1 = _mm_and_si128(xmm1, xmm2);     //  AND  4 32-bit words
+           _mm_store_si128(dst_ptr, xmm1);
+           ++dst_ptr;
+           ++wrd_ptr;
+
+      } while (wrd_ptr < wrd_end);
+}
+</pre>
+
+
+<p>When writing this code two main assumptions were made:<br>
+	<li><b>block_size</b> always gives us "right" amount of array elements. To fill one 128-bit XMM register
+we need to have at least 4 32-bit words in source and destination arrays, plus number of elements in arrays
+should be multiple by 4.	BM library uses bit blocks of size 2048 which suits perfectly both for loop unrolling and SIMD parallel programming.
+	<li>Source and destination pointers contain 16-byte aligned addresses.
+</p>
+
+<h3>Memory access optimization</h3>
+
+<p>Historically all x86 CPUs work well with misaligned data.  Programs often does not care about alignment
+issues. The next code works well on any x86 but crashes on most RISC CPUs.
+</p>
+
+<pre>
+    char* p = (char*) malloc(256);
+    int* p1 = (int*)(p+1);                  //  Misaligned address
+    *p1 = 0;                                //  Potential disaster !
+</pre>
+ 
+<p>When it comes to SSE Intel strongly suggests not neglecting alignment to get top performance.
+In SSE2 mode <strong>all bitwise block pointers must be 16-byte aligned to avoid crashes</strong>.
+BM library lets you to overload default <a HREF="memalloc.html">memory allocator</a>, but when doing this
+you need to bare in mind data alignment issue. 
+C++ <i>new</i> operator does not provide 16-byte alignment guarantees so you need to use special environment specific
+functions.
+</p>
+
+<p>SIMD enabled compilers usually provide functions for aligned memory allocation.
+For Intel C++ use the <i>_mm_malloc/_mm_free</i> intrinsics to allocate and free aligned blocks of memory. 
+In MSVC v.7 <i>_aligned_malloc/_aligned_free</i> serves the same purpose. 
+Don't make a mistake by calling general purpose<i>free</i> to deallocate pointer created by <i>_mm_malloc</i>.
+It will cause unpredictable behavior. 
+</p>
+
+<h3>Bits counting</h3>
+
+<p>BitMagic library is optimized for 64-bit processors. As a part of <a HREF="bm64opt.html">optimization</a> 
+it implements parallel bitcounting algorithm. Here is implementation for 32-bit based integer.
+</p>
+
+<pre>
+unsigned BitCount32(unsigned b)
+{
+    b = (b & 0x55555555) + (b >> 1 & 0x55555555);
+    b = (b & 0x33333333) + (b >> 2 & 0x33333333);
+    b = (b + (b >> 4)) & 0x0F0F0F0F;
+    b = b + (b >> 8);
+    b = (b + (b >> 16)) & 0x0000003F;
+    return b;
+}
+</pre>
+
+<p>The algorithm is perfect for SSE2 vectorization.
+</p>
+
+
+<p align="center"><img src="images/simdbitcount.gif" alt="NonSIMD" border="0" align="center"></p>
+<p align="center"><strong>Fig. 3.</strong></p>
+
+<p>On every step we are counting SSE quad word 4 bitcount sub results and accumulate it in 
+XMM result variable. When the whole array is done all we need to do is to add all 4 sub results from the 
+accumulator.
+</p>
+
+<p>The best description here is certainly the code itself:</p>
+
+<pre>
+unsigned bit_count_sse2(__m128i* block, __m128i* block_end)
+{
+    const unsigned mu1 = 0x55555555;
+    const unsigned mu2 = 0x33333333;
+    const unsigned mu3 = 0x0F0F0F0F;
+    const unsigned mu4 = 0x0000003F;
+
+    // Loading masks
+    __m128i m1 = _mm_set_epi32 (mu1, mu1, mu1, mu1);
+    __m128i m2 = _mm_set_epi32 (mu2, mu2, mu2, mu2);
+    __m128i m3 = _mm_set_epi32 (mu3, mu3, mu3, mu3);
+    __m128i m4 = _mm_set_epi32 (mu4, mu4, mu4, mu4);
+    __m128i mcnt;
+    mcnt = _mm_xor_si128(mcnt, mcnt); // cnt = 0
+
+    while (block < block_end)
+    {
+        __m128i tmp1, tmp2;
+        __m128i b = _mm_load_si128(block);
+
+        // b = (b & 0x55555555) + (b >> 1 & 0x55555555);
+        tmp1 = _mm_srli_epi32(b, 1);                    // tmp1 = (b >> 1 & 0x55555555)
+        tmp1 = _mm_and_si128(tmp1, m1); 
+        tmp2 = _mm_and_si128(b, m1);                    // tmp2 = (b & 0x55555555)
+        b    = _mm_add_epi32(tmp1, tmp2);               //  b = tmp1 + tmp2
+
+        // b = (b & 0x33333333) + (b >> 2 & 0x33333333);
+        tmp1 = _mm_srli_epi32(b, 2);                    // (b >> 2 & 0x33333333)
+        tmp1 = _mm_and_si128(tmp1, m2); 
+        tmp2 = _mm_and_si128(b, m2);                    // (b & 0x33333333)
+        b    = _mm_add_epi32(tmp1, tmp2);               // b = tmp1 + tmp2
+
+        // b = (b + (b >> 4)) & 0x0F0F0F0F;
+        tmp1 = _mm_srli_epi32(b, 4);                    // tmp1 = b >> 4
+        b = _mm_add_epi32(b, tmp1);                     // b = b + (b >> 4)
+        b = _mm_and_si128(b, m3);                       //           & 0x0F0F0F0F
+
+        // b = b + (b >> 8);
+        tmp1 = _mm_srli_epi32 (b, 8);                   // tmp1 = b >> 8
+        b = _mm_add_epi32(b, tmp1);                     // b = b + (b >> 8)
+
+        // b = (b + (b >> 16)) & 0x0000003F;
+        tmp1 = _mm_srli_epi32 (b, 16);                  // b >> 16
+        b = _mm_add_epi32(b, tmp1);                     // b + (b >> 16)
+        b = _mm_and_si128(b, m4);                       // (b >> 16) & 0x0000003F;
+
+        mcnt = _mm_add_epi32(mcnt, b);                  // mcnt += b
+
+        ++block;
+    }
+    bm::id_t tcnt[4];
+    _mm_storeu_si128((__m128i*)tcnt, mcnt);
+
+    return tcnt[0] + tcnt[1] + tcnt[2] + tcnt[3];
+}
+</pre>
+
+
+<h3>Putting thing together</h3>
+
+<p>Now we optimized both logical operations and bitcounting routines the question to ask is <b>how it affects
+the performance?</b> The answer to this question largely depends on bandwidth of our memory subsystem.
+Here I intentionally avoid quoting any numbers, but experience says that in case of large bitsets (not
+fitting into the CPU cache) we may have no or little difference between optimized plain C version and tuned 
+SSE2 code. Why? The high performance 2+ GHz CPU simply starves for the data. High performance 
+double channel memory controllers has the potential to significantly improve the bandwidth situation. 
+</p>
+
+<p>Another way is to try to close the gap between memory access instructions and computations.
+The best example here is computing distances between two bit vectors. Lets take Hamming distance, 
+which is the minimum number of bits that must be changed in order to convert one bit string into another.
+
+<p>This can be found by using XOR on corresponding bits or equivalently, 
+by adding corresponding bits (base 2) without a carry. For example, in the two bit strings that follow: 
+</p>
+<pre>
+                          A      0 1 0 0 
+                          B      1 1 0 1 
+                       A XOR B = 1 0 0 1 
+</pre>
+<p>
+The Hamming distance between A and B is 2, the number of 1's in the XOR string. 
+</p>
+
+<p>The straight forward C++ code computing this distance usually looks like:
+
+<pre>
+unsigned int hamming_distance(const bvector<>& a, const bvector<>& b)
+{
+	bvector<> tmp(a);        
+	tmp ^= b;
+	return tmp.count();
+}
+</pre>
+
+<p>This code inevitably engages into alocation of memory(can be slow!), memory-memory transfer(slow!),
+XOR operation which results in fetching of two bitstring from memory into the CPU, little bit of processing
+and then saving results back to memory (slow!). After that we compute bitcount which is also a bandwidth
+limited operation. Provided that out bit strings are long and do not fit the CPU cache, performance of this
+distance function can be far from perfect. So as many HPC applications this one is bandwidth limited and all
+tuning should target bandwidth optimization. 
+</p>
+
+<p>Fortunately in this case the problem can be solved. 
+It is quite clear that we really want is to kill the temporary. 
+What we need to do is to write a function which will XOR two bitsets word by word and compute bitcount 
+immediately. In this case we only every vectors once. It means our memory to CPU ratio improves and SSE2 starts making 
+perfect sense.
+</p>
+
+
+
+<h3>Implementation details</h3>	
+
+<p>To turn SSE2 optimization on you need to define <b>BMSSE2OPT</b> macro
+in your makefile or in(before) bm.h header. This option is not supposed to work together with <b>BM64OPT</b>.
+</p>
+
+<p>
+Current revision of BM library is not trying to identify the target CPU on runtime and if SSE2 optimization is on, 
+you will not be able to run the application on CPUs without SSE2 support (like AMD or Pentium III).
+</p>
+
+<p>Intel suggests using <i>_mm_empty()</i> after a SIMD integer instruction block if the next instruction is an x87 FP instruction; for example, before doing calculations on floats, doubles or long doubles. BM library by default calls 
+<i>_mm_empty</i> to make sure other components of your program are safe. But if your program does not intermix FP arithmetic 
+with integer SSE2 or you want to control this parameter by yourself you can disable automatic emptying of x86 FP stack. <br>
+To disable stack reinitialization code define BM_SET_MMX_GUARD.<br>
+
+<pre>
+#define BMSSE2OPT
+#define BM_SET_MMX_GUARD
+#include "bm.h"
+....
+</pre>
+
+</p>
+
+
+<h3>References</h3>
+
+<p>
+[1] Intel Corporation. Intel® Pentium® 4 and Intel® Xeon™ Processor Optimization<br>
+
+[2] Intel Corporation. Intel Developer Web Site. http://developer.intel.com <br>
+</p>
+
+
+<h3>Acknowledgements</h3>
+
+<p>MMX, SSE, SSE2, Pentium 4 are all registered trademarks of Intel Corporation.
+</p>
+
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

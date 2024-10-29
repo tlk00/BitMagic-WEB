@@ -1,0 +1,144 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 5.4.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <header>
+                                <h1>Version 5.4.0</h1>
+                                <span class="date">Dec 8, 2019</span>
+                            </header>
+                            <p></p>
+                            <h2>Release Notes</h2>
+                            <ol>
+                                <li>
+                                    Fixed minor corner case bug in <code>bm::bvector&lt;&gt;::invert()</code>.
+                                    The bug was inversion of a vector of size() == 0.
+                                </li>
+                                <li>
+                                    Minor performance improvements for
+                                    <code>bm::bvector&lt;&gt;::find_first_mismatch(..)</code> -
+                                    find first mismatch between two bit-vectors.
+                                </li>
+                                <li>
+                                    New bit-transposed sparse vector algorithm.
+                                    <code>
+                                        template<typename SV>
+                                            bool sparse_vector_find_first_mismatch(const SV& sv1,
+                                            const SV& sv2,
+                                            typename SV::size_type& midx);
+                                    </code>
+                                    Algorithm helps finding first mismatch between two bit-transposed vectors
+                                    without reverse de-transposition, using operations on bit plains.
+                                </li>
+                                <li>
+                                    New example for <code>bm::sparse_vector_find_first_mismatch(...)</code> &nbsp;
+                                    <a href="https://github.com/tlk00/BitMagic/tree/master/samples/svsample09">svsample09</a>.
+                                    <a href="dna-compare.html">Tech.Notes</a>
+                                </li>
+
+                            </ol>
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic5.4.0/" class="button">Download v 5.4.0</a></p>
+
+                            <h2>Application notes on sparse vector mismatch search</h2>
+                            <p>
+                                <span class="image left"><img src="images/bt_mismatch.png" alt="bit-transposed mismatch search using XOR" /></span>
+                            </p>
+
+                            <p>
+                                Mismatch search is based on pairwise XOR search between bit-plains.
+                                Logical operations are easy to vectorize, so bit-plain based algorithm can be very 
+                                efficient. We have to analyze all plains, but once at least one mismatch found 
+                                we don’t have to do XOR search beyond it, so algorithm being O(N) has a property of 
+                                search space reduction (data dependent). Sparse vector mismatch search can be used 
+                                to construct a comparison function between long compressed strings. 
+                                Once position of a mismatch is found, element comparison is easy.
+                            </p>
+                            <br /><br /><br />
+                            <h2>Code examples</h2>
+
+                            <ol>
+                                <li><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svsample09">svsample09</a></li>
+                            </ol>
+
+                        </section>
+					</section>
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

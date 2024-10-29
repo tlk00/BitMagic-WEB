@@ -1,0 +1,260 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+<meta http-equiv="refresh" content="5; URL=bm5-bic.html" />
+		<title>BitMagic version 5.0.0 Compression Notes (Binary Interpolated Codes)</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <header>
+                                <h1>BitMagic 5.0.0 Notes on Binary Interpolated compression</h1>
+                                <span class="date">Anatoliy Kuznetsov, July 20, 2019</span>
+                            </header>
+                            <p></p>
+                            <h2>Introduction</h2>
+                            <p>
+                                BitMagic Library v.5.0.0 implemented new type of compressed serialization.
+                                The change is to add Binary Interpolated coding scheme. This application notes documents
+                                collected benchmarking statistics, thoughts and observations.
+                            </p>
+
+                            <p>
+                                Sorted lists are commonly used in information retrieval and databases or as part of a upper
+                                level application compression scheme. Bit-vectors are often used as a representation of
+                                sorted lists and implement highly efficient set-theoretical operations such as
+                                set union (OR), set intersect (AND), etc.
+                            </p>
+                            <p>
+                                Another interesting application is bit-transposed succinct vectors, where each bit-plain
+                                is a separately encoded bit-vector. All such containers are to be serialized and saved at
+                                some point, which is where better compression plays an important role in optimizing
+                                storage costs operation latency and performance per watt efficiency.
+                            </p>
+                            <p>
+                                Better compression pays off, because disk is the new tape!
+                            </p>
+
+                            <h2>Serialization-compression notes</h2>
+
+                            <p>
+                                BitMagic uses partitioned scheme, splitting the source bit-vector into smaller
+                                blocks of 64K bits each. Compression scheme follows this pattern adaptively picking
+                                the best representation for each block. This scheme was proposed by Culpepper and Moffat
+                                as HYB+M2 and this idea was implemented in BitMagic library as an adaptive scheme
+                                which keeps some bit-blocks as bit-blocks maybe with minimal compression
+                                but tries to compress sparse blocks using delta differential coding with Elias Gamma step.
+                            </p>
+                            <p>
+                                BitMagic v5.0.0, tries an alternative second stage, it uses Interpolative Coding
+                                (with Centered Minimal code assignment) for blocks which were selected as compression targets.
+                                The overall scheme remain hybrid with a number of heuristics, for example it detects very dense blocks and
+                                is capable to encode complementary positions of ‘0’, instead of ‘1’s. Optimizations like these are important
+                                for compression of dense bit-sets which are often formed in applications other than text retrieval.
+                            </p>
+
+                            <h2>Testing rig</h2>
+                            <p>
+                                Mac OS High Sierra, 3.2 GHz Intel Core i5,  24 GB 1867 MHz DDR3
+                                Apple LLVM version 10.
+                                Ambient room temperature 27C (turns out to be a factor too).
+                                All I/O comes and goes to NVMe SSD.
+                            </p>
+
+                            <h2>Testing scenarious</h2>
+
+                            <p>
+                                <ol>
+                                    <li>
+                                        Compression scenario. Loads data from little endian size prefixed raw dump,
+                                        makes minimal verification of data integrity, imports data into <code>bm::bvector&lt;&gt;</code>, serializes it to disk.
+                                    </li>
+                                    <li>
+                                        Verification - retrieval scenario. Loads data from initial dump and
+                                        from compressed collection, performs a deserialization and decode pass on
+                                        bm::bvector&lt;&gt; to make sure it matches the original.
+                                    </li>
+                                </ol>
+                            </p>
+
+                            <p>
+                                As you can see, the measurements include various I/O factors and elements of application
+                                logic (verification), which makes it more difficult to compare.
+                                We see this experiment as more holistic way to study the compression code as a part of a
+                                bigger application ecosystem. This is important for practical engineering.
+                            </p>
+
+                            <p>We can tweak the test set later to measure compression-decompression isolate from QC factors.</p>
+
+                            <p>
+                                Benchmark data are derived from Gov2 data set. Experiment touches two different datasets of
+                                inverted lists: Gov2 Sorted and Gov2 Unsorted. Sorted dataset preprocessed the input pages so data
+                                from one site comes more together, forming better runs in the inverted lists.
+                            </p>
+
+
+                            <h2>Measurements statistics</h2>
+
+                            <p>
+                                <span class="image center"><img src="images/bench/bm5-cmpr1.png" width="512" alt="" /></span>
+                                <br />
+                                Fig 1. Compression efficiency comparison bits per one integer listed in Gov2 compressed collection.
+                                Method excludes the BLOB size prefix, specific for this variant of data dump.
+                            </p>
+                            <p>
+                                <span class="image center"><img src="images/bench/bm5-cmpr2.png" width="512" alt="" /></span>
+                                <br />
+                                Fig 2. Compression time in seconds on Gov2 Sorted dataset.
+                            </p>
+                            <p>
+                                <span class="image center"><img src="images/bench/bm5-cmpr3.png" width="512" alt="" /></span>
+                                <br />
+                                Fig 3. Read, decode and verification time for Gov2 Sorted dataset.
+                            </p>
+                            <p>
+                                <span class="image center"><img src="images/bench/bm5-cmpr4.png" width="512" alt="" /></span>
+                                <br />
+                                Fig 4. Compression time in seconds on Gov2 Unsorted dataset.
+                            </p>
+
+
+                            <p>
+                                <span class="image center"><img src="images/bench/bm5-cmpr5.png" width="512" alt="" /></span>
+                                <br />
+                                Fig 5. Read, decode and verification time for Gov2 unsorted dataset.
+                            </p>
+
+                            <h2>Optimization and performance observations</h2>
+
+                            <p>Both Elias Gamma and Interpolated Coding algorithms at this moment do not include 
+                            any SIMD optimizations. The differences in performance comes from block to int conversion 
+                            algorithms and compression assessment, which are benefit from use of SSE4.2 with POPCNT 
+                            and AVX2.
+                            </p>
+
+                            
+
+                            <p>
+                                Interpolative compression offers benefits in storage volume, compression algorithm 
+                                is CPU intensive, and not memory intensive, which is good - it means it should be 
+                                possible to significantly improve performance with SSE4.2 and AVX2 vectorization.
+                            </p>
+
+                            <p>
+                                Other implementation of BIC provided in [1] by Giulio Ermanno Pibiri offers good reference code.
+                                Bitmagic ofers independent implementation with includes number of changes, related to performance
+                                transforming one recursive call into a loop(tail call recursion elimination), 
+                                replacing divisions with logical ops, some branchless techniques to help CPU in code
+                                pipelining.                                 
+                            </p>
+
+                            <h2>GitHub</h2>
+
+                            <p>
+                                Testing framework and instructions are available on GitHub.
+                                <a href="https://github.com/tlk00/BitMagic/tree/master/utils/inv_list">GitHub</a>
+                            </p>
+
+                            <h2>Acknowledgements</h2>
+                            <p>
+                                Benchmarking sets provided by Daniel Lemire and Leonid Boytsov.
+                            </p>
+
+                            <h2>References</h2>
+                            <p>
+                                [1] Giulio Ermanno Pibiri. On Implementing the Binary Interpolative Coding Algorithm
+                                <a href="http://pages.di.unipi.it/pibiri/papers/BIC.pdf">http://pages.di.unipi.it/pibiri/papers/BIC.pdf</a>
+                                GitHub
+                                <a href="https://github.com/jermp/interpolative_coding">GitHub</a>
+                                <br />
+                                [2] Alistair Moffat and Lang Stuiver. 1996. Exploiting Clustering in Inverted File Compression. In Data Compression Conference. 82–91.
+                                <br />
+                                [3] Alistair Moffat and Lang Stuiver. 2000. Binary Interpolative Coding for Effective Index Compression. Information Retrieval Journal 3, 1 (2000), 25–47.
+                                <br />
+                                [4] Vo Ngoc Anh, Alistair Moffat. Index Compression using Fixed Binary Codewords.
+                                <br />
+                                [5] Daniel Lemire, Leonid Boytsov, Nathan Kurz, SIMD Compression and the Intersection of Sorted Integers, arXiv: 1401.6399, 2014 
+                                <a href="http://arxiv.org/abs/1401.6399">Arxiv</a>
+                            </p>
+
+                            <br />
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic5.0.0/" class="button">Download v 5.0.0</a></p>
+                        </section>
+					</section>
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

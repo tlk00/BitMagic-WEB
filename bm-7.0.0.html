@@ -1,0 +1,166 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.0.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.0.0</h1>
+                        <span class="date">July 30, 2020</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <p>BitMagic v.7.0.0 focuses on improving serialization compression and 
+                    introduces changes in serialization format.</p>
+
+
+                    <ol>
+                        <li>
+                            BitMagic supports Binary Interpolative Coding as a compression method for lists
+                            of bits and RLE GAPs. New version made significant improvements to make
+                            serialized bit-vectors and sparse containers smaller to improve storage costs
+                            and transfer speed. The focus of this improvement was to better process very
+                            sparse bit-vectors.  A one-dimensional bit-vector consists of blocks divided on
+                            word boundaries and encoded in chunks. Blocks are grouped into fixed depth
+                            hierarchical compression structure. Version 7 makes in-depth analysis of groups
+                            and determines where and how do escalation of compression window to save space,
+                            reduce amount of unnecessary block headers. Another optimization was to more
+                            use variable byte coding for storing technical information within serialized
+                            stream.
+                        </li>
+
+                        <li>
+                            <p>
+                                New version adds another compression layer (layer 6) which is a new default
+                                using new statistics and cut offs to improve compression rate vs time spent.
+                                At the same time performance of compression was improved by optimizations,
+                                so overall Level 6 compression time is only slightly higher than Level 5 time in
+                                the version 6.4.0. (Plan is to return to performance optimizations in the following release).
+                            </p>
+                            <p>
+                                BitMagic library uses bit-vectors as buillding blocks for succinct
+                                containers, this release improves serialization-compression of 
+                                other succinct structures.
+                            </p>
+                            <p>
+                                This serialization format change supports protocol evolution, new version is
+                                backward compatible with the old BLOBs, you don't have to re-serialize the
+                                old BLOBs and convert databases. 
+                                Old readers will NOT be able to read new BLOBs without recompilation.
+                            </p>
+                        </li>
+
+
+
+                        <li>
+                            Version 7.0.0 fixes a rare, but critical bug in Rank-Select index algorithm.
+                        </li>
+
+
+                        <p>
+                            <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.0.0/" class="button">Download v7.0.0 (Sourceforge)</a>
+                            <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.0.0" class="button">GitHub</a>
+                        </p>
+
+
+                        <h3>Compression rates comparison</h3>
+
+                        <p>
+                            <span class="image fit"><img src="images/bench/bm-700.png" alt="Compression rates" /></span>
+                        </p>
+
+                        <p>Compression comparison in bytes. BitMagic v7.0.0 improves Binary Interpolative Coding compression rates on both 
+                        level 5 (old default) and level 6 (new default). Measured on Gov2 benchmark set of inverted lists 
+                        (sorted and unsorted) it gives up to 6% improvement, which should significantly imrove 
+                        storage efficiency for very large systems.</p>
+
+                        <h3>Acknowledgements</h3>
+
+                        <p>Thanks to Daniel Lemire and Leonid Boytsov (authors of Roaring Bitmaps) 
+                        for providing benchmarking sets of inverted lists.</p>
+</section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

@@ -1,0 +1,289 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+        <title>
+            Technical notes on sorting of compressive string vectors.
+        </title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>
+                            Technical notes on sorting of compressive string vectors.
+                        </h1>
+                        <span class="date">Anatoliy Kuznetsov, Sept, 2022. (based on BM v.7.13.4</span>
+                    </header>
+                    <p></p>
+                    <h2>Introduction</h2>
+
+                    <p>
+                        BitMagic v.7.13.4 implements new methods to fast swap of bits in
+                        compressive bit-vectors and swap of elements in compressive containers 
+                        (based on bit-vector functinality).
+                    </p>
+
+                    <p>
+                        <code>bm::bvector&lt;&gt;:::swap(size_type idx1, size_type idx2);</code>
+                    </p>
+
+                    <p>
+                        This new functionality is better compared to
+                        external implementation of bit values (swap via get/set operations), because it
+                        takes into account localities of indexes and properties of compressed
+                        bit-vectors.
+                    </p>
+
+                    <p>
+                        BitMagic now provides swap() methods for its succinct data
+                        vectors. BM succinct structures use bit-slicing approach, to represent
+                        vectors as collections of bit-vectors.
+                    </p>
+
+                    <p>
+                        Swap is a building block for sorting (and shuffling) algorithms.
+                        This technical note studies characteristics of sorting on succinct data
+                        structures based on the new swap() method. Here we measure memory footprint,
+                        sorting speed and how it compares to a non compressive approach.
+                    </p>
+
+
+                    <h2>Experiment details</h2>
+
+                    <p>
+                        Full source code for this experiment is available in <code>strsvsample09.cpp</code> part of the
+                        BM distribution. <a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample09">https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample09</a>.
+                    </p>
+
+                    <p>
+                        In this small experiment we generate a set of strings, with frequent common prefixes
+                        and random numbers with some repeated values (in hundreds). 
+                        Under these conditions the test generates a mixture of compressed and 
+                        uncompressed bit-vectors. In our view this set is sufficiently characteristic 
+                        of many real-life cases to be useful (for a synthetic benchmark).
+                    </p>
+
+                    <p>
+                        The generated set contains a modest number of more than 800 thousands
+                        strings, which will be sufficient not to fully fit into CPU cache 
+                        (for now not taking into account future CPU models with extra large 3D 3rd level cache).
+                    </p>
+
+                    <h2>Notes on memory consumption</h2>
+
+                    <p>
+                        Succinct::str_sparse_vector<> uses next compression techniques:
+                        <ul>
+                            <li>
+                                Bit-slicing (also known as bit-wise transpose) - each bit in the
+                                consecutive vector of strings is loaded into its own bit-vector,
+                                isolating frequent bits. Bit-vectors are able to compress it better
+                                using a variant of RLE, since distribution of bits in the strings are not
+                                random.
+                            </li>
+                            <li>
+                                Characters remapping, where frequent characters receive more optimal codes (lower total number of bits)
+                                (variant of Hamming code). Remapping is complementary to bit-slicing, because it can reduce both number
+                                of bit-vectors in the set and enthropy in each individual vector.
+                            </li>
+                        </ul>
+                    </p>
+
+                    <p>
+                        BitMagic provides methods for accurate profiling of memory consumption in
+                        succinct data structures, so we can measure the compression efficiency.
+                        For STL we don’t have the luxury, but it is relatively easy to write some
+                        approximate profiling to compare.
+                        Note that both methods do not account for heap fragmentation, but for simple
+                        benchmarking cases it should not be a significant issue. In real life though,
+                        heap fragmentation of non-compressive structures like STL can be significantly
+                        higher than succinct vectors of BitMagic
+                        (or any other implementation of compressive data structures).
+                    </p>
+
+                    <p>
+                        In our synthetic case BM has 13x advantage over STL in RAM consumption.
+                    </p>  
+
+                    <h2>Sorting</h2>
+
+                    <p>
+                        What if we need to sort this compressive data set?<br />
+                        BitMagic succinct vectors are great for searching (everything is a bit-vector concept is good for that)
+                        but random element access can insure a significant runtime penalty, because vector
+                        elements have to be reassembled out of bit-vectors (potentially compressed).
+                        Would it be prohibitively expensive?
+                    </p>
+
+                    <p>
+                        Case example implements several variants of sorting: two variants of quick sort and
+                        insertion sort.
+                    </p>
+
+                    <p>
+                        The fastest variant is here below.
+                    </p>
+<pre>
+void quicksort2(str_sv_type& strsv, int first, int last)
+{
+    using stype = str_sv_type::size_type;
+    int i, j, pivot;
+
+    // fixed size for simplicity (in prod code needs dynamic buffer handling)
+    static str_sv_type::value_type pivot_buf[128];
+    while (first &lt; last)
+    {
+        pivot = i = first;
+        j = last;
+
+        // save the pivor to re-use it in strsv.compare(..)
+        strsv.get(stype(pivot), pivot_buf, sizeof(pivot_buf));
+
+        while (i &lt; j)
+        {
+            while((i < last) && (strsv.compare(stype(i), pivot_buf) <= 0))
+                ++i;
+            while(strsv.compare(stype(j), pivot_buf) > 0)
+                --j;
+            if (i < j)
+                strsv.swap(stype(i), stype(j));
+        } // while
+        strsv.swap(stype(pivot), stype(j));
+
+        quicksort2(strsv, first, j-1);
+        first = j+1; // tail recursion
+    } // while
+}
+
+</pre>
+
+                    <p>
+                        This variant above uses two BitMagic specific optimizations.
+                        First it uses a compare() method between a value and element of a succinct vector to
+                        minimize random extraction (pet peeve of BitMagic).
+                        Please note use of a “static” fixed size buffer for the value.
+                        Obviously in production code it has to be reworked.
+                    </p>
+
+                    <p>
+                        <span class="image fit"><img src="images/bench/BM-sort-intel.png" width="512" alt="Succinct sort on Intel Core" /></span>
+                        <span class="image fit"><img src="images/bench/BM-sort-amd.png" width="512" alt="Succinct sort on AMD Ryzen" /></span>
+                    </p>
+
+                    <h2>Performance optimizations notes</h2>
+                    <p>
+                        <ol>
+                            <li>Use of custom comparison functions makes the biggest impact.</li>
+                            <li>No significant SIMD advantage, both due to the nature of the problem (random access does not vectorize well) and because latest BitMagic includes extensive optimizations for regular non-SIMD versions of the algorithms. </li>
+                            <li>Insertion sort performs worse than quick sort</li>
+                        </ol>
+                    </p>
+
+                    <h2>Compressive quick sort vs standard sort</h2>
+
+                    <p>
+                        The numbers from the benchmark show that compressive sort is hundred times slower than non-compressive search, 
+                        but at the same time compressive space can offer 10x advantage in used RAM. 
+                        In the light of this observation it boils down to 
+                        certain practical use cases, where compressive search may be useful.
+                    </p>
+
+                    <ol>
+                        <li>Situations with RAM pressure: in WebAssembly programs or embedded programming.</li>
+                        <li>As an alternative to sorting through the disk, which can also be hundreds times slower. 
+                        This use case is also important in the light of parallel, many core programming approaches 
+                        to sort, should significantly improve the succinct sort while over the disk sort is largely 
+                        bounded by the I/O limitations.
+                        </li>
+                    </ol>
+
+                    <h2>Source codes (GitHub)</h2>
+
+                    <p>
+                        <a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample09">strsvsample09</a>
+                    </p>
+
+
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

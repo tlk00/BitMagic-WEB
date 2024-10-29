@@ -1,0 +1,528 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Genomics layout with bit-intervals and succinct containers</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="set-algebra.html">Algebra of Sets</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+            <div class="wrapper">
+
+                <!-- Main -->
+                <section class="main">
+                    <section>
+                        <header>
+                            <h1>Genomics layouts with bit-intervals and succinct data structures</h1>
+                            <span class="date">Anatoliy Kuznetsov, March 16, 2020</span>
+                        </header>
+                        <p></p>
+                        <h2>Introduction</h2>
+
+                        <p>
+                            This use case discusses use of BitMagic bit-vectors and succinct containers for building a
+                            layout model for genetic data as memory compact structure. BitMagic library provides an array of
+                            functions and algorithms for range and interval interpretation of bit-vectors.
+                            This use case is to explore this APIs to compute data layout using bit-vectors as collections of
+                            non-overlapping intervals, add attributes using Rank-Select succinct vector.
+                            To better illustrate thye case we create a toy visualization using ASCII graphics.
+                        </p>
+
+                        <h2>Layout calculation</h2>
+
+                        <p>
+                            <span class="image left"><img src="images/lay/genomic_viewers.png" alt="Collage of various Genomic Viewers" /></span>
+                        </p>
+
+                        <p>
+                            Many genomics viewers employ horizontally stacked layout of genomic annotations (features),
+                            which displays features in genome coordinate space. Horizontally stacked layout arranges features
+                            in non-overlapping layers of coverage. Total number of necessary layers is sometimes called
+                            “depth of coverage”.
+                        </p>
+
+                        <p>
+                            <span class="image right"><img src="images/lay/layout_bits.png" alt="Layout structure simplified" /></span>
+                        </p>
+
+                        <p>
+                            It is possible to use conventional data structures to calculate the graphical layouts, but in this study we
+                            explore options based on bit-vectors based on interpretation of bit-vectors as non-overlapping intervals of 1s.
+                        </p>
+
+                        <p>
+                            Bit-vector based layout calculation algorithm uses
+                            <code>bm::bvector&lt;&gt;::any_range(from, to)</code> method to detect and find an empty spot in a
+                            coverage plane. In this model each plane is an independent bit-vector, and feature markup area is
+                            represented as a block of consecutive 1s, flanked with 0s like “011110” (interval).
+                            BitMagic keeps bit-vector blocks of such pattern structure using GAP representation,
+                            and uses Binary Interpolative Encoding (Moffat) to compress and serialize vectors.
+                            This representation is memory efficient and easy to interpret using <code>bm::interval_enumerator&lt;&gt;</code>
+                        </p>
+
+                        <h2>Beyond layout</h2>
+
+                        <p>
+                            <span class="image left"><img src="images/lay/layout_attr.png" alt="Layout structure with attributes" /></span>
+                        </p>
+
+                        <p>
+                            Just having the layout (genomic coordinates) is not enough for a viable model.
+                            Lets add a feature strand characteristic to the mix here. If we are modeling DNA, which has two
+                            strands, we would need to know if feature stand is positive or negative/complementary or unknown
+                            (possible corner case). We use numeric codes (0, 1, 2) for feature stand indicators.
+                            It would be convenient to have our strand properties on the same planes in the same genomic
+                            coordinates as our features. It is possible to create yet another pair of bit-vectors to mark-up
+                            features, but there is a better method. We can assign strand indicator to the feature start
+                            coordinate and use Rank-Select compressed containers to handle it.
+                        </p>
+
+                        <br /><br /><br />
+                        <p>Code snippet for the succinct data model.</p>
+<pre>
+                        <code>
+#include "bm.h"
+#include "bmintervals.h"
+#include "bmsparsevec_compr.h"
+
+...
+
+typedef bm::interval_enumerator&lt;bm::bvector&lt;&gt; &gt; interval_enumerator_type;
+typedef std::vector&lt;std::unique_ptr&lt;bm::bvector&lt;&gt; &gt; &gt; layout_vector_type;
+
+typedef bm::sparse_vector&lt;unsigned char, bm::bvector&lt;&gt; &gt;       sparse_vector_u8;
+typedef bm::rsc_sparse_vector&lt;unsigned char, sparse_vector_u8&gt; rsc_vector_u8;
+typedef std::vector&lt;std::unique_ptr&lt;rsc_vector_u8&gt; &gt;  starnds_vector_type;
+
+
+struct data_model
+{
+    void optimize();
+    void add_layout(size_t plane, bm::bvector<>* bv);
+    void add_strand(size_t plane, rsc_vector_u8* strand);
+
+    layout_vector_type     layout_v;   ///< layout vector
+    starnds_vector_type    strand_v;  ///< strand planes vector
+};
+
+    </code>
+</pre>
+
+                        <p>
+                            Layout calculation code snippet, uses <code>bm::bvector&lt;&gt;::any_range()</code> and
+                            <code>bm::bvector&lt;&gt;::set_range()</code> to encode non-overalpping '011110' intervals</code>
+                        </p>
+<pre>
+                        <code>
+void add_object(data_model& dm, unsigned start, unsigned end,
+                unsigned char strand)
+{
+    assert(start <= end);
+    bm::bvector<>* bv; // layout plane vector
+    for (size_t i  = 0; i < dm.layout_v.size(); ++i)
+    {
+        bv = dm.layout_v[i].get();
+        if (!bv)
+        {
+            bv = new bm::bvector<>(bm::BM_GAP);
+            dm.layout_v[i] = unique_ptr<bm::bvector<> >(bv);
+                // bv just created (empty) no need to do range check
+                bv->set_range(start, end);
+                set_feature_strand(dm, i, start, strand);
+                return;
+        }
+        if (!bv->any_range(start, end)) // check if layout space is not used
+        {
+            bv->set_range(start, end);  // add [start..end] coordinates
+            // set strand at the start of feature
+            set_feature_strand(dm, i, start, strand);
+            return;
+        }
+    } // for i
+
+    // not found, make new plane
+    //
+    bv = new bm::bvector<>(bm::BM_GAP);
+    dm.layout_v.emplace_back(std::unique_ptr<bm::bvector<> >(bv));
+    bv->set_range(start, end);
+    set_feature_strand(dm, dm.layout_v.size()-1, start, strand);
+}
+
+    </code>
+</pre>
+
+                        <h2>Rank-Select Compression (NULL compression)</h2>
+
+                        <p>
+                            Rank-Select Succinct data representation is also known as “NULL values compression”.
+                            This is not a truly compression method, it is a succinct method.
+                            The terminological difference between compression and succinct is our ability to access the data in compressed
+                            form (with some penalty) without decoding the whole data block or compression page.
+                        </p>
+                        <p>
+                            <span class="image left"><img src="images/lay/null_compr.png" alt="NULL compression" /></span>
+                        </p>
+
+                        <p>
+                            The idea of Rank-Select or NULL compression is to keep one single presence-absence bit-vector
+                            (not NULL vector) representing logical coordinates in the container and not to keep NULL values at all.
+                            Bit-vectors define operations of Rank and Select through bit-counting and allow to do address
+                            precomputation, so logical-physical address translation is sufficiently fast, especially with assist of a
+                            Rank-Select Index (BitMagic has it) and accelerated compute using hardware POPCNT and BMI2
+                            instructions (BitMagic uses it as well).
+                        </p>
+
+                        <p>
+                            In the illustration here we show that element with logical coordinate 4 has Rank=1 (POPCNT-1)
+                            after we excluded all the NULL values.
+                        </p>
+
+                        <p>
+                            In this example we use <code>bm::rsc_sparse_vector&lt;&gt;</code>
+                            we can just use our logical (genomic) coordinates for attributes and avoid memory bloat.
+                            It is both, easy and effcient.
+                            Another aspect of <code>bm::rsc_sparse_vector&lt;&gt;</code> is that it uses
+                            bit-transposed representation for values, so if our value for possible strands uses only 3 bits
+                            because of a maximum of 2 – it will use only 2 bit planes in bit-sliced form plus the address
+                            bit-vector.
+                            This succinct compression trick can be very useful when we have large models or memory
+                            pressure environment (like WebAssembly).
+                        </p>
+
+                        <h2>ASCII graphics</h2>
+
+                        <p>
+                            Based on our succinct data model lets create a simple toy visualization using ASCII prints.
+                            The toy ASCII “renderer” is only a few lines of code, but it illustrates the concept of layered feature layout.
+                        </p>
+
+                        <p>
+                            As you can see rendering code uses <code>bm:interval_enumerator&lt;&gt;</code> to re-interpret
+                            bit-vector layout as pairs
+                            of values and reflect strand attributes in pseudo graphics. You can fork the reference code and come up with SVG
+                            rendering algorithm here or use true graphical pipeline withy OpenGL/WebGL.
+                        </p>
+
+                        <p>Exmaple ASCII layout </p>
+                        <pre>
+-------------------------------------------------------------------------
+ATGTTAGCCCGCGCATATTATATATGTAGCGTATTAAGCGDGGAGATTACCCTTGCATTAGGTTANNNNNNNN
+-------------------------------------------------------------------------
+<    >....>    <....<
+    <.................................................................<
+                    >.........>
+                ?....?
+</pre>
+
+
+                        <p>Snippet of code on for the toy renderer</p>
+
+<pre><code>
+#include "bm.h"
+#include "bmintervals.h"
+#include "bmsparsevec_compr.h"
+
+
+void print_model(const data_model& dm)
+{
+    const bm::bvector&lt;&gt;* bv; // layout
+    const rsc_vector_u8* strand_plane;
+
+    // Sequence on top is for purely decorative purposes
+    cout <<
+    "-------------------------------------------------------------------------"
+    << endl <<
+    "ATGTTAGCCCGCGCATATTATATATGTAGCGTATTAAGCGDGGAGATTACCCTTGCATTAGGTTANNNNNNNN"
+    << endl <<
+    "-------------------------------------------------------------------------"
+    << endl;
+
+    for (size_t i  = 0; i < dm.layout_v.size(); ++i)
+    {
+        bv = dm.layout_v[i].get();
+        if (bv)
+        {
+            strand_plane = i < dm.strand_v.size() ? dm.strand_v[i].get() : nullptr;
+            interval_enumerator_type ien(*bv);
+            if (ien.valid())
+            {
+                bm::bvector&lt;&gt;::size_type spaces = 0;
+                do
+                {
+                    auto st = ien.start(); auto end = ien.end();
+                    char ch_strand = '?';
+                    if (strand_plane)
+                    {
+                        auto strand = strand_plane->get(st);
+                        switch (strand)
+                        {
+                        case 0: ch_strand = '>'; break; // positive
+                        case 1: ch_strand = '<'; break; // negative
+                        default: break; // unknown strand
+                        }
+                    }
+                    for (; spaces < st; ++spaces)
+                        cout << " ";
+                    for (bool first = true; st <= end; ++st, first = false)
+                    {
+                        if (st == end)
+                            cout << ch_strand;
+                        else
+                            cout << (first ? ch_strand : '.');
+                    } // for
+                    spaces = end+1;
+                } while (ien.advance());
+                cout << endl;
+            }
+        }
+    } // for
+}
+</code></pre>
+
+                        <h2>Data Model splicing </h2>
+                        <p>
+                            <span class="image left"><img src="images/lay/layout_interval_slicing.png" alt="interval end/start search" /></span>
+                        </p>
+
+                        <p>
+                            Another operation to discuss here is data model splicing.
+                            Very often we don’t need the whole genomic model. For example, human Chr1
+                            is 200 million base pairs, plant chromosomes are even longer. That's a lot of data
+                            which viewer does not need all at once.Thus we need cut-n-paste.
+                        </p>
+
+                        <p>The most natural splicing is splicing in the domain of sequence coordinate ranges [from..to].</p>
+
+                        <p>
+                            Our succinct model fully supports such range splicing as all the containers
+                            support copy_range() method. Copy range preserves the area of interest and does not
+                            copy everything outside of it. All vectors are sparse and prepared to handle this case and save memory.
+                        </p>
+                        <br /><br /><br /><br />
+                        <p>
+                            <span class="image right"><img src="images/lay/layout_intreval_slicing2.png" alt="adaptive model slicin" /></span>
+                        </p>
+
+                        <p>
+                            The important aspect of coordinate splicing is that most likely you don’t want to cut your features
+                            in halves. If we do that we loose the feature span and we can loose the feature start,
+                            which keeps the strand indicator. Not ideal, right?
+                        </p>
+
+                        <p>
+                            To address this we should always extend the cut index to the interval boundaries
+                            of features. BitMagic offers <code>bm::find_inetrval_start()</code> and <code>bm::find_interval_end()</code>
+                        </p>
+
+                        <p>Sample output from the coordinate based slicer which adaptively extends coverage layers to
+                        feature boundaries. Initial requested range was [5..10] but slicers stretches it in planes crossing 
+                        the boundaries. This approach can be adapted for cases where you may need to extend left boundarie 
+                        but cut the right or similar cases.
+                        </p>
+
+<pre>
+-------------------------------------------------------------------------
+ATGTTAGCCCGCGCATATTATATATGTAGCGTATTAAGCGDGGAGATTACCCTTGCATTAGGTTANNNNNNNN
+-------------------------------------------------------------------------
+     >....>
+    <.................................................................<
+</pre>
+
+                        <p>As we see here slicer in this case keeps strand attribute but this is also optional. 
+                        In complex models with hundreds of data model attributes and parameters you sometimes do not need 
+                        everything in the desired coordinate space. Typical example would be BAM files with read tags, like
+                        quality scores, not neccesarily important for visualization.                        
+                        </p>
+
+                        <p>Data model based on vectors can be sliced many dimensions, not just coordinate space of genome.
+                        In fact you can also drop attributes. This approach is well known in columnar databases, 
+                        using compressed columns/vectors as analytics engines.
+                        </p>
+
+                        <p>Our example can also do slicing by coordinates and model attributes. 
+                        Since we decided to keep only one attribute (strand) we can only drop strand. 
+                        This is not terribly practical to drop stand, but ok for illustration purposes. 
+                        </p>
+
+<pre>
+-------------------------------------------------------------------------
+ATGTTAGCCCGCGCATATTATATATGTAGCGTATTAAGCGDGGAGATTACCCTTGCATTAGGTTANNNNNNNN
+-------------------------------------------------------------------------
+     ?....?
+    ?.................................................................?
+</pre>
+
+                        <p>In this case renderer just shows all features as "Unknown" strand.</p>
+
+                        <p>Code sample to illustrate interval aware slicing</p>
+
+<pre><code>
+void splice_model(data_model& dm_target, const data_model& dm,
+        bm::bvector&gt;&lt;::size_type start,
+        bm::bvector&gt;&lt;::size_type end,
+        bool copy_strands)
+{
+    const bm::bvector&lt;&gt;* bv; // layout
+    const rsc_vector_u8* strand_plane;
+
+    size_t t_plane = 0;
+    for (size_t i  = 0; i < dm.layout_v.size(); ++i)
+    {
+        bv = dm.layout_v[i].get();
+        if (bv)
+        {
+            bm::bvector&lt;&gt;::size_type start_pos;
+            bm::bvector&lt;&gt;::size_type end_pos;
+
+            bool found = bm::find_interval_start(*bv, start, start_pos);
+            if (!found)
+                start_pos = start;
+            found = bm::find_interval_end(*bv, end, end_pos);
+            if (!found)
+                end_pos = end;
+
+            unique_ptr&lt;bm::bvector&lt;&gt;&gt; bv_ptr(new bm::bvector<>(bm::BM_GAP));
+            bv_ptr->copy_range(*bv, start_pos, end_pos);
+            if (bv_ptr->any()) // copy range may have ended as empty
+            {
+                dm_target.add_layout(t_plane, bv_ptr.release());
+                // slice the strands plane (if requested)
+                //
+                if (copy_strands)
+                {
+                    if (i < dm.strand_v.size())
+                    {
+                        strand_plane = dm.strand_v[i].get();
+                        if (strand_plane)
+                        {
+                            unique_ptr&lt;rsc_vector_u8&gt; strand_ptr(new rsc_vector_u8());
+                            strand_ptr->copy_range(*strand_plane, start_pos, end_pos);
+                            dm_target.add_strand(t_plane, strand_ptr.release());
+                        }
+                    }
+                }
+                ++t_plane;
+            } // if any()
+        } // if bv
+    } // for i
+}
+</code></pre>
+
+
+
+                        <h2>GitHub</h2>
+                        <p>
+                            Sources and build instructions are available at
+                            <a href="https://github.com/tlk00/BitMagic/tree/master/samples/xsample08">xsample08</a>
+                        </p>
+
+                        <h2>Conclusions</h2>
+
+                        <ol>
+                            <li>
+                                This example showed construction of genomic visualization layout models with 
+                                BitMagic succinct data structures, model slicing and interpretaion (rendering).
+                            </li>
+                            <li>
+                                In this case we intentinally avoided serialization of the model 
+                                (which is totally possible) to keep our example succinct.
+                                This example avoids talking on compression ratios which can be achieved using
+                                succinct model (it definately deserves a separate study).
+                            </li>
+                            <li>
+                                BitMagic library is fast and easy to use. :-)
+                            </li>
+                        </ol>
+
+                        <h3>See also</h3>
+                        <ol>
+                            <li>
+                                <a href="dna-search.html">DNA search using bit-vector fingerprints</a>
+                            </li>
+                            <li>
+                                <a href="doxygen/html/group__bvintervals.html">Algorithms for bit-intervals (Doxygen)</a>
+                            </li>
+                        </ol>
+
+                    </section>
+
+                </section>
+
+            </div>
+
+		<!-- Footer -->
+            <footer id="footer">
+                <section class="contact">
+                    <h3>Follow us on Twitter</h3>
+                    <ul class="contact-icons">
+                        <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+                    </ul>
+                </section>
+                <div class="copyright">
+                    &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+                </div>
+            </footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

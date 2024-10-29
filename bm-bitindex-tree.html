@@ -1,0 +1,231 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Bit indexed trees</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>Bit Vector Indexed Trees</h1>
+                            
+
+                            <p><span class="image left"><img src="images/tree-graph.png" alt="tree graph" /></span>
+                            Trees are a widely used as an abstract data type, form of connected acyclic graph, representing sets of nodes and edges.
+                            Algorithms and systems working with large trees often need to solve problems with finding paths from one node to another.
+                            Since all graphs are very often defined as sets of connected nodes such problems can be solved using set algebraic
+                            operations using bit vectors.
+                            </p>
+
+                            <p>As use case lets discuss the problem of finding the common ancestors between nodes.</p>
+
+                            <p>The straight forward solution to this problem is based on assumption the tree is fully available in memory 
+                            and all nodes are bi-directionally linked. In this model there is a relatively simple back tracing algorithm, 
+                            from both nodes, which should synchronize in at the most common ancestor. 
+                            All nodes up the ancestor – would be our common set of ancestors. 
+                            While relatively simple for just two nodes, the complexity of the algorithm grows when we need to process many nodes. 
+                            It is also difficult to make such algorithm parallel which is imperative nowdays.
+                            </p>
+
+
+
+                            <p><span class="image left"><img src="images/tv-common-ancestor.png" alt="tree graph" /></span>
+                             Bit vector indexing can help to solve this problem.
+                             First, lets assume, that all nodes in our tree being uniquely identified with numbers. 
+                            This numbers may be or may not be sorted along the topology, this is not very important 
+                            at this moment. Next step would be to run a variant of back tracing algorithm.
+                            </p>
+
+                            <p>The back tracing algorithm should go for each node where we need to find the ancestry. 
+                            As a result we would have a set of bit vectors, each describing the ancestry set 
+                            (but not the ancestry line, since we do not expect the ids to be sorted).
+                            The nice way to do it would be to use of "Visitor" Design Pattern, or lamdas, but lets stick to
+                            a relatively simple and readable way of reverse iteration.
+                            </p>
+
+                            <div class="row">
+                                <div class="6u 12u$(small)">
+                                    <pre><code>
+    bm::bvector<> bv;
+    while (node->parent != 0)
+    {
+	    unsigned id = node->parent.id;
+	    bv[id] =  id;   // add node id to the bit set
+	    node = node->parent;
+    }
+                                    </code></pre>
+                                 </div>
+                                 <div class="6u 12u$(small)">
+                                    <p>
+                                        Please note, that the calculation of all ancestry sets is embarrassingly parallel
+                                        problem, all the nodes can be processed as tasks in different threads without syncronization points.
+                                        In terms of map-reduce – this would be mapping stage.
+                                    </p>
+                                 </div>
+
+                                </div>
+
+                            <!-- Break -->
+
+                            <div class="row">
+                                <div class="6u 12u$(small)">
+                                    <pre><code>
+    // this is not legal C++ a pseudo code for clarity
+    bm::bvector<> common_ancestry_set;
+    for ( EACH SET )   
+    {
+         if (first set)
+              common_ancestry_set = set[i];
+          else
+             common_ancestry_set &= set[i];   
+    }                                    
+                                    </code></pre>
+                                </div>
+                                <div class="6u 12u$(small)">
+                                    <p>The algorithm above will reduce all the back traced ancestry sets into one common set.
+                                       The finishing touch may be finding the most common ancestor. 
+                                       This can be done via back-tracing where each back-trace step checks the common ancestry set. 
+                                       The first found is our lowest common ancestor.
+                                    </p>
+                                </div>
+
+                            </div>
+                            <!-- Break -->
+                            <div class="row">
+                                <div class="6u 12u$(small)">
+                                    <pre><code>
+    unsigned common_parent = 0;
+    while (node->parent != 0)
+    {
+	    unsigned id = node->parent.id;
+	    if (common_ancestry_set.test(id))
+        {
+            common_parent = id;                               
+		    break;
+        }
+	    node = node->parent;
+    }                                   
+                                     </code></pre>
+                                </div>
+                                <div class="6u 12u$(small)">
+                                    <p>
+                                        This can be done via back-tracing where each back-trace step checks the common ancestry set.
+                                        The first found is our lowest common ancestor.
+                                    </p>
+                                </div>
+
+                            </div>
+                            <!-- Break -->
+                            
+                            <p>The method above illustrates the basic principles of how to use set algebra for tree searches.
+                               Combination of set algebraic constructs and traversal algorithms.
+                               If we anticipate many requests of this type we would save all the ancestry 
+                               vectors as an index to avoid back-trace step, which is essentially a bit index creation. 
+                               BitMagic supports compressed serialization of bit vectors, so index can be stored in a file, 
+                               or in a database or in memory.
+                            </p>
+
+                            <h3>Implementation notes</h3>
+                            <p>
+                                Graphs very often has characteristics to produce very sparse sets or even embarrassingly sparse sets. 
+                                This is where straight bit vectors may become less efficient (memory consumption).
+                                For graphs and trees makes sense to use compressed bit vector mode <code>bm::bvector<> bv(BM_GAP)</code> 
+                                which turns use of D_GAP in-memory compression (access penalty is minimal or may actually work faster than plain bit sets).
+                            </p>
+
+                            <p>If memory consumption is an issue (large graphs with in-memory indexing) optimize allocations by calling 
+                                <code>bvector<>::optimize_gap_size()</code>.
+                            </p>
+
+                            <p>
+                                Another option of cause is to use plain sorted vectors of node ids for all or some indexes. 
+                                BitMagic library provides interoperability,  <code>bvector<></code> can be combined with vector of integers using 
+                                functions <code>bm::combine_and(), bm::combine_and_sorted(), bm::combine_or()</code>, etc. 
+                                <a href="doxygen/html/group__setalgo.html">More</a>.
+                            </p>
+
+                            <p>
+                                Needless to say, that STL (if we are working in C++ envelop) provides std::set_intersection() and other set 
+                                algebraic algorithms. Implementation choice for performance critical applications needs experiment with specific data.
+                            </p>
+
+                            <h3>Acknowledgements</h3>
+                            <ul>
+                                <li>Sample tree visualization produced with <a href="https://www.ncbi.nlm.nih.gov/tools/gbench/">NCBI Genome Workbench</a></li>
+                            </ul>
+                            </div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

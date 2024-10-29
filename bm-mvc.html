@@ -1,0 +1,470 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+        <title>Notes on MVC design using compressed data frames</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Notes on MVC design using compressed data frames</h1>
+                        <span class="date">Anatoliy Kuznetsov. Oct 2020 (based on BM v.7.3.0+)</span>
+                    </header>
+                    <p></p>
+                    <h2>Introduction</h2>
+                    <p>
+                        The example/use case study to illustrate optimization techniques for range
+                        deserialization of compressed vectors.
+                        The problem is put in the context of interactive visualization systems
+                        working with compressed BitMagic models not fitting into main memory
+                        in non-compressed form. It is still possible to keep such models in
+                        memory compressed-serialized and only extract a necessary portion (range)
+                        of the vectors implementing a scrolling through compressed data.
+                        Deserialized data open up into as succinct sparse vectors where the target
+                        sparse vector would contain the deserialized data.
+                    </p>
+
+
+                    <h2>Model-View-Controller on large data sets</h2>
+
+                    <p>
+                        Model-View-Controller is a common design pattern for UI,
+                        popular for design of desktop and Web applications. Model is the data intensive component of
+                        this pattern. It receives user input from the Controller and has to provide the data.
+                        Response time from the Model is a common bottleneck in data intensive applications
+                        as it impacts latency of UI, which generally should be within milliseconds.
+                    </p>
+                    <p>
+                        It can be especially challanging on the WEB, where Model is backed up with
+                        a remote network service.
+                    </p>
+
+                    <p>
+                        The specifics of interactive systems is that it is assumed that target
+                        decode range is defined by the user which means next decode range may partially
+                        overlap with the old one (probability that the operator wants to see a neighboring
+                        data exists in many applications related to visual exploratory browsing of
+                        large data sets).
+                    </p>
+
+                    <p>
+                        Large data set UI applications present two conditions I would like to
+                        reiterate upon:
+                        <ol>
+                            <li>significant memory pressure on the application </li>
+                            <li>need for fast response(low latency) after the user input</li>
+                        </ol>
+                    </p>
+
+                    <p>
+                        The proposed design would keep the data set compressed (in RAM) and would only
+                        decompress a slice of the data. Vector-columnar data models usually allow slicing
+                        in two dimensions: columns and ranges of coordinates. Range decode are often called
+                        Gather-Scatter, but today we touch a more specific variant of it when we need to
+                        extract a window of vector data.
+                    </p>
+
+                    <span class="image fit"><img src="images/BM-MVC.png" width="512" alt="" /></span>
+                    <p style="text-align:center;">Screenshot of a grid is from NCBI Genome Workbench</p>
+
+                    <p>
+                        To accommodate user input (Controller) Model would keep an excessive range around
+                        what it actually shows on the screen (Visual Range).  While user browse in the Sliced
+                        range the UI is very responsive, but when the focus shifts, data slice needs to
+                        be re-extracted. Assumption is that in many applications the browsing direction is
+                        actually not chaotic, but scrolls around (forward or backwards), so the sliding
+                        window needs to follow the direction of scrolling.
+                    </p>
+
+                    <p>
+                        Old slice and new slice often overlap and this can be exploited to
+                        avoid unnecessary decompression work.
+                    </p>
+
+                    <h2>Demo application design</h2>
+
+                    <p>
+                        xsample10 demo makes a few simplifying assumptions: it always scrolls
+                        forward for the 30% of decode window. The demo app
+                        does not illustrate the backward scrolling with overlap or random scrolling
+                        to keep the general idea succinct.
+                    </p>
+
+                    <p>
+                        The test example creates a simulated data frame of 3 sparse vectors
+                        (2 string vectors and one vector of unsigned ints), using generated dense pseudo-bioinformatics
+                        dataset, somewhat resembling bioinformatics GFF/VCF columnar formats with 25000000 records.
+                    </p>
+
+
+                    <h2>Vector serialization for range extraction</h2>
+
+                    <p>
+                        A few notes vector serialization setup:
+                        <ol>
+                            <li>
+                                Serialization code uses XOR compression for each serialized vector,
+                                but does not use XOR between vectors in the whole data-frame.
+                                Cross vector XOR compression could improve compression ratio, but it would
+                                require us to always deserialize all the vectors, because they would all
+                                become part of compression scheme and depend on each other.
+                                It is not always convenient and it is not the case point of this demo.
+                            </li>
+                            <li>
+                                Serialization is configured to use bookmarks.
+                                Bookmarks are useful when we plan to deserialize random vector ranges and this is
+                                exactly what we want to do here. Bookmarks somewhat increase the sizes of BLOBs
+                                but this increase is very insignificant.
+                                <code>sv_serializer_u32.set_bookmarks(true, 32)</code>can be used to enable bookmarks and set
+                                them at approximately 32 blocks (65536 vector elements). This is not very precise,
+                                but provides a balance between speed of range decode and extra size it adds to
+                                the compressed vector.
+                            </li>
+                        </ol>
+                    </p>
+
+                    <p>
+                        Code example:
+<pre><code>
+bm::sparse_vector_serializer&lt;str_sv64_type&gt; sv_serializer;
+bm::sparse_vector_serializer&lt;sparse_vector_u32&gt; sv_serializer_u32;
+
+    // configure with bookmarks for fast range deserialization
+    //
+    sv_serializer.set_bookmarks(true, 32);
+    sv_serializer.enable_xor_compression();
+    sv_serializer_u32.set_bookmarks(true, 32);
+    sv_serializer_u32.enable_xor_compression();
+</code></pre>
+                    </p>
+
+                    <p>
+                        BitMagic vectors are designed as sparse (it works well for dense cases as well),
+                        so they allow range extraction with preservation of the coordinate space
+                        (which is very convenient).
+                        If we have a serialized vector of <strong>{ 1, 10, 20, 21, .. }</strong> we can request a range of
+                        <strong>[1..2]</strong> and get a vector <strong>{ 0, 10, 20, 0, .. }</strong>,
+                        range deserialization is not a database cursor (as it may be misuderstood) because it
+                        restores elements of the vector in the original coordinates.
+                        Combined with extract functions it can be made into a cursor (but why?).
+                    </p>
+
+                    <h2>Range decode algorithms</h2>
+
+                    <p>
+                        xsample10 implements benchmarks using overlapping forward scrolling using 3 methods:
+                        <ol>
+                            <li>
+                                “Range” bm::sparse_vector_deserializer<>::deserialize_range()
+                                The overlap with the old range is just ignored. New data slice is just restored as new from
+                                serialized BLOB. (see scroll_benchmark_range() method)
+
+<pre><code>
+void scroll_benchmark_range(
+            const compressed_data_frame& df_cz, unsigned size,
+            const data_frame& df,
+            bm::sparse_vector_deserializer&lt;str_sv64_type&gt;& sv_deserial_str,
+            bm::sparse_vector_deserializer&lt;sparse_vector_u32&gt;& sv_deserial_u32)
+{
+    data_frame df_r; // range data frame (partial)
+
+    unsigned cnt = 0;
+    for (unsigned i = 0; i < size; i+=page_size/3, ++cnt)
+    {
+        unsigned from(i), to(i+page_size-1); // define range variables
+
+        // deserialize range for each vector in the data frame
+        //
+        sv_deserial_str.deserialize_range(df_r.id,
+                    (const unsigned char*)df_cz.id_buf.data(), from, to);
+        sv_deserial_str.deserialize_range(df_r.seq,
+                    (const unsigned char*)df_cz.seq_buf.data(), from, to);
+        sv_deserial_u32.deserialize_range(df_r.pos,
+                    (const unsigned char*)df_cz.pos_buf.data(), from, to);
+
+        // as a payload to simulate real work
+        // use test comparison with the orginal data frame
+        //
+        if (is_check)
+            check_range(df_r, df, from, to);
+    } // for
+}
+</code></pre>
+                            </li>
+                            <li>
+                                “Clear/Range/Merge” This method is overlap aware, it implements an
+                                algorithm which uses “clear_range()” of sparse vectors to free
+                                the non-overlapping part of the old data slice. Then it restores a
+                                non-overlapping part of new range (forward looking data slice) using a
+                                temporary vector variables. At this point we have two data frame slices
+                                (old slice cleared and new slice incremental).
+                                “merge()” combines the vectors together. Temporary variable is not longer valid because
+                                merge is a data move operation so temp is just destroyed.
+                                (scroll_benchmark_clear_range_merge())
+<pre><code>
+void scroll_benchmark_clear_range_merge(const compressed_data_frame& df_cz,
+                                        unsigned size,
+                                        const data_frame& df,
+            bm::sparse_vector_deserializer&lt;str_sv64_type&gt;& sv_deserial_str,
+            bm::sparse_vector_deserializer&lt;sparse_vector_u32&gt;& sv_deserial_u32)
+{
+    data_frame df_r;
+
+    unsigned from(0), to(0);
+    unsigned i = 0;
+    for (; i < size; i+=page_size/3)
+    {
+        {
+        data_frame df_tmp;
+        // clear the range evicted out of the scrolling window
+        if (i)
+        {
+            df_r.id.clear_range(from, i-1);
+            df_r.seq.clear_range(from, i-1);
+            df_r.pos.clear_range(from, i-1);
+        }
+
+        auto prev_to = i ? to+1 : 0;
+        from = i; to = i+page_size-1;
+        assert(from < prev_to || !i);
+
+        // deserialize into a temp (empty) dataframe
+        sv_deserial_str.deserialize_range(df_tmp.id,
+                (const unsigned char*)df_cz.id_buf.data(), prev_to, to);
+        sv_deserial_str.deserialize_range(df_tmp.seq,
+                (const unsigned char*)df_cz.seq_buf.data(), prev_to, to);
+        sv_deserial_u32.deserialize_range(df_tmp.pos,
+                (const unsigned char*)df_cz.pos_buf.data(), prev_to, to);
+
+        // merge temp dataframe into the target dataframe
+        df_r.id.merge(df_tmp.id);
+        df_r.seq.merge(df_tmp.seq);
+        df_r.pos.merge(df_tmp.pos);
+        }
+
+        if (is_check)
+            check_range(df_r, df, from, to);
+
+    } // for
+}
+</code></pre>
+                            </li>
+                            <li>
+                                “Range/Merge/Keep”
+                                This is a simpler variant of 2, where instead of explicit “clear_range()” we use its functional counterpart “keep_range()”
+                                keeping all the data outside the range. (scroll_benchmark_merge_keep_range())
+
+<pre><code>
+void scroll_benchmark_merge_keep_range(const compressed_data_frame& df_cz,
+                       unsigned size,
+                       const data_frame& df,
+            bm::sparse_vector_deserializer&lt;str_sv64_type&gt;& sv_deserial_str,
+            bm::sparse_vector_deserializer&lt;sparse_vector_u32&gt;& sv_deserial_u32)
+{
+    data_frame df_r;
+
+    unsigned from(0), to(0);
+    unsigned i = 0;
+    for (; i < size; i+=page_size/3)
+    {
+        data_frame df_tmp;
+        auto prev_to = i ? to+1 : 0;
+        from = i; to = i+page_size-1;
+        assert(from < prev_to || !i);
+
+        // deserialize into a temp (empty) dataframe
+        sv_deserial_str.deserialize_range(df_tmp.id,
+                (const unsigned char*)df_cz.id_buf.data(), prev_to, to);
+        df_r.id.merge(df_tmp.id);
+        df_r.id.keep_range(from, to);
+
+        sv_deserial_str.deserialize_range(df_tmp.seq,
+                (const unsigned char*)df_cz.seq_buf.data(), prev_to, to);
+        df_r.seq.merge(df_tmp.seq);
+        df_r.seq.keep_range(from, to);
+
+        sv_deserial_u32.deserialize_range(df_tmp.pos,
+                (const unsigned char*)df_cz.pos_buf.data(), prev_to, to);
+        df_r.pos.merge(df_tmp.pos);
+        df_r.pos.keep_range(from, to);
+
+        if (is_check)
+            check_range(df_r, df, from, to); // check the range
+
+    } // for
+}
+</code></pre>
+                            </li>
+                        </ol>
+                    </p>
+                    <p>
+                        xsample10 can be configured to run pure scrolling or run a payload simulation on
+                        each deserialized range, comparing the range to the original vectors with iterators.
+                        Having a payload is important for practical benchmarking (vs. micro-benchmarking) 
+                        Real-life application will necessarily have some failry complex logic with
+                        scrolling loop.
+                    </p>
+
+                    <span class="image left"><img src="images/bench/BM-MVC-bench1.png" width="512" alt="" /></span>
+
+                    <h2>Benchmark results</h2>
+                    <p>Using 3.2GHz Quad-Core Intel i5</p>
+
+                    <h3>Effects of bookmarking and scrolling algorithms</h3>
+                    <p>
+                        Use of serialization bookmarks significantly improves performance of
+                        “bm::sparse_vector_deserializer<>::deserailize_range() (at a cost of fractions of percent
+                        in size of the vector.
+                    </p>
+
+                    <p>
+                        Bookmark parameter helps a lot but the performance curve starts flattening
+                        after “32”, yet at “16” it still shows measurable improvement in all 3 benchmark
+                        methods.
+                    </p>
+                    <p>
+                        Overlap aware methods with “merge()” can add an extra 15% percent of performance
+                        improvement (important for low-latency apps).
+                    </p>
+
+                    <br /><br /><br />
+                    <br /><br /><br />
+                    <h3>Platform builds</h3>
+                    <span class="image right"><img src="images/bench/BM-MVC-bench2.png" width="512" alt="" /></span>
+
+                    <p>
+                        Platform tests for SIMD: tests positively respond to SSE4.2 / AVX2.
+                    </p>
+
+                    <h3>Notes on WebAssembly</h3>
+
+                    
+                    <p>
+                        WebAsm test show an interesting phenomenon. WebAsm payload function based
+                        on iterators makes it quite slow, despite the fact that decompression
+                        algorithm runs almost at native speed. It was noticed before that a
+                        combination of Emscripten / WASM produces with exceptions and use of complex
+                        iterators with a FSM (Finite State Machine) logic produces somewhat slower code.
+                        More C-centic approach is possible since all BitMagic containers provide
+                        low level C-style decode functions, working faster than <code>const_iterator</code>.
+                    </p>
+
+                    <h2>Other suggestions (parallelism)</h2>
+
+                    <p>
+                        All data frame vectors are independent entities (the example does not use
+                        XOR compression between different vectors), so this example can be easily
+                        reformulated to use threads to do range manipulation in parallel.
+                    </p>
+
+                    <h2>MVC for distributed systems</h2>
+
+                    <p>
+                        The same MVC design can be adapted for distributed systems where compressed data
+                        set is a remote and kept under a (micro-)service. In this case we would need
+                        to do slicing and re-serialization in remote service.
+                        In this situation the use of overlap aware methods 2 and 3 become very important,
+                        as it significantly reduces network traffic by sending only a non-overlapping
+                        increment.
+                    </p>
+
+                    <p>
+                        For Web applications MVC pattern with compressed model can be
+                        implemented using WebAssembly.
+                    </p>
+
+                    <h2>GitHub</h2>
+
+                    <p>
+                        Sources are available:
+                        <a href="https://github.com/tlk00/BitMagic/tree/master/samples/xsample10">xsample10</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+
+            <section class="contact">
+                <h3>Follow us</h3>
+                <p>
+                    <ul class="contact-icons">
+                        <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+                        <li class="icon fa-envelope"><a href="mailto:info@bitmagic.io">info@bitmagic.io</a></li>                    </ul>
+                </p>
+            </section>
+
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

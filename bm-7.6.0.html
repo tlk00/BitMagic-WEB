@@ -1,0 +1,154 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.6.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.6.0</h1>
+                        <span class="date">Oct 17, 2021</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            <p>
+                                fixed regression bug from 7.5.0 in dynamic matrix allocation algorithms of succinct vectors
+                            </p>
+                        </li>
+
+                        <li>
+                            <p>
+                                <code>bm::aggregator&lt;&gt;</code> reworked to support new pipeline mode for AND-MINUS ("all this but not that" queries)
+                                aggregation, using L1/L2 cache and algorithmic optimizations to run thousands of coordinated aggregations times
+                                faster than it was possible in previous version
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                <code>bm::scanner&lt;&gt;</code> implements string new string search method for bulk search with bm::aggregator<>::pipeline under the hood.
+                                New bm::scanner<>::pipeline can run multiple string searches in unordered succinct string vectors times faster.
+                                It also implements new search methods which can be used to run massive queries and construct results
+                                (inverted list bit-vectors) or run stat analysis for population count without materializing the result vectors
+                                (effectively histogram construction).
+                            </p>
+                            <p>
+                                This new development improves on theidea of using "data as an index",
+                                exploiting the properties of bit-sliced (bit-transposed) succinct data structures to facilitate search
+                                without building an exlicit inverted index.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                New example: strsvsample07.cpp
+                                added to illustrate use of fast scanner and scanner pipeline 3x times, with synthetic benchmarks showing 3x better
+                                performance for bulk search cases.
+                                <a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample07" class="button">strsvsample07</a>
+                            </p>
+                            <p>
+                                Example implements a simple synthetic benchmark comparing <code>bm::scanner</code> search
+                                modes on unsorted, succinct string vector. New pipeline gives 3x improved performance,
+                                with extra improvements in optimized SIMD versions.
+                            <p>
+                                <span class="image fit"><img src="images/bench/bm760_scanner_pipeline_bench.png" width="512" alt="BM scanner" /></span>
+                            </p>
+                            </p>
+                        </li>
+
+                        <li>
+                            Parallel compute engine and thread pools reworked to use Modern C++ approach based on lambdas rather than function
+                            pointers. New development lays the internal foundation for BitMagic parallel algorithms to unfold its potential
+                            on multi-threaded systems. Fixed instrumentation warnings about possible race conditions.
+                        </li>
+
+                        <li>
+                            <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.6.0/" class="button">Download v7.6.0 (Sourceforge)</a>
+                            <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.6.0" class="button">GitHub</a>
+                        </li>
+
+</section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

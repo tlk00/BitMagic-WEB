@@ -1,0 +1,4 @@
+[1021/150334.172:ERROR:settings.cc(430)] Settings version is not 5
+[1021/151334.188:ERROR:filesystem_win.cc(129)] GetFileAttributes C:\Users\anato\AppData\Local\Microsoft\Edge\User Data\Crashpad\attachments\bfd45439-11ea-4d9e-b6ed-a9dca6fab44e: The system cannot find the path specified. (0x3)
+[1021/151334.189:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)
+[1022/151335.454:ERROR:directory_reader_win.cc(43)] FindFirstFile: The system cannot find the path specified. (0x3)

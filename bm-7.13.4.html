@@ -1,0 +1,150 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.12.3</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.13.4</h1>
+                        <span class="date">May 12, 2023</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            <p>
+                                Improved <code>str_sparse_vector&lt;&gt;::clear_all()</code>  - added parameter to reset remap matrix by default, which is safer (less surprises for the user). Method signature changed, this may cause some minor incompatibility issues.
+                            </p>
+                        </li>
+                        <li>
+                            <p>New method <code>bm::sparse_vector&lt;&gt;::get_unsigned_bits()</code> - to extract partial value (only a few bits) </p>
+                        </li>
+                        <li>
+                            Optimizations of <code>bm::bvector&lt;&gt;::inc()</code> (minor)
+                        </li>
+                        <li>
+                            Added bm::bvector&lt;&gt;::swap() - method to swap two bit positions - 
+                            basis for implementing sort or shuffle algorithms on compressive memory 
+                            structures
+                        </li>
+                        <li>
+                            Added <CODE>bm::sparse_vector&lt;&gt;::swap()</CODE> - to help implement swap of 
+                            shuffle algorithms on succinct vectors
+                        </li>
+
+                        <li>
+                            Added new example <a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample09">strsvsample09</a> to showcase sort algorithm in compressive memory space
+                        </li>
+
+                        <li>
+                            Optimization for bit-vector deserialization algorithm to avoid frequent reallocations of top-level memory table. Especially important for large 48/64-bit mode bit-vectors.
+                        </li>
+                        <li>
+                            optimizations of <code>bm::bvector&lt;&gt;::import()</code>, implemented memory reservation (important for large 48/64-bit imports)
+                        </li>
+                        <li>
+                            Fixed bug with collaborative XOR compression, causing debug level asserts and inability to decode compressed vectors.                             Various code-cleanups to reduce warnings in different compilers, improves MSVC compatibility.
+                        </li>
+                        <li>
+                            Fixed bug in incorrect binary search in compressive string vector (<code>bm::sparse_vector_scanner&lt;&gt;</code>)
+                        </li>
+                        <li>
+                            Improved build system to better support Apple M2
+                        </li>
+
+
+                    </ol>
+
+
+                    <section>
+                        <p>
+                            <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.13.4/" class="button">Download v7.13.4 (Sourceforge)</a>
+                            <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.13.4" class="button">GitHub</a>
+                        </p>
+                    </section>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

@@ -1,0 +1,263 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 6.4.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 6.4.0</h1>
+                        <span class="date">May 12, 2020</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            New algorithm <code>bm::rank_range_split(...)</code> (bmalgo.h)
+                            to determine N non-overlapping ranges with the same rank (population count).
+                            See example:
+                            <a href="doxygen/html/sample24_8cpp-example.html">bvsample24.cpp</a>
+
+                            New algorithm can be used for planning of parallel processing when
+                            bit-vector defines a pool of tasks which needs to be broken into
+                            a few sub-groups based on equal weight.
+                            <br /><br />
+                            <h4>Code example</h4>
+<pre>
+                            <code>
+        #include "bm.h"
+        #include "bmalgo.h"
+
+        using namespace std;
+
+        typedef bm::bvector&lt;&gt;::size_type bv_size_type;
+        typedef std::vector&lt;std::pair&lt;bv_size_type, bv_size_type&gt;
+        > bv_ranges_vector;
+
+        const unsigned ranges = 3; // split into 3 ranges
+        bm::bvector&lt;&gt;   bv { 10, 20, 100, 200, 300, 655000, 7890000 };
+
+
+        bv_size_type cnt = bv.count();
+        bv_size_type split_rank = cnt / ranges; // target population count
+
+        bv_ranges_vector pair_vect;
+        bm::rank_range_split(bv, split_rank, pair_vect);
+    </code>
+</pre>
+                            AVX2 optimizations for population counting for <code>bm::aggregator&lt;&gt;</code>
+                        </li>
+
+                        <li>
+                            New <code>bm::bvector&lt;&gt;::enumerator</code> constructor to take
+                            <code>const bm::bvector&lt;&gt;&</code> reference.
+                        </li>
+
+                        <li>
+                            Rank-Select compressed container <code>bm::rsc_sparse_vector&lt;&gt;</code> constructor to
+                            explicitly define its NOT NULL values. This new mode is for use case
+                            when RSC container values are known and can now be randomly assigned
+                            using rank-select index for address compute acceleration.
+                            This new mode is times faster for construction of compressed containers in
+                            compact memory. See technical notes below for more details.
+                            <a href="doxygen/html/rscsample04_8cpp-example.html">rscsample04.cpp</a>
+                        </li>
+
+                        <li>
+                            Fixed bug in <code>bm::sparse_vector_find_first_mismatch(..)</code> algorithm
+                        </li>
+
+                        <li>
+                            improved compilers support of <code>[[fallthrough]]</code> in a Clang corner case
+                            (thanks to Aaron Ucko)
+                        </li>
+                        <li>
+                            fixed compilation issues related (GCC) related to handling of
+                            <code>__attribute__((always_inline))</code>  (forced inline)
+                        </li>
+                    </ol>
+
+                    <p>
+                        <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic6.4.0/" class="button">Download v6.4.0 (Sourceforge)</a>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v6.4.0" class="button">GitHub</a>
+                    </p>
+
+
+                    <h3>Technical notes on Rank-Select sparse vector</h3>
+
+                    <p>
+                        Rank-Select Succinct data representation is also known as “NULL values compression”.
+                        This is not a truly compression method, it is a succinct method.
+                        The terminological difference between compression and succinct is our ability to access the data in compressed
+                        form (with some penalty) without decoding the whole data block or compression page.
+                    </p>
+
+                    <p>
+                        <span class="image right"><img src="images/lay/null_compr.png" alt="NULL compression" /></span>
+                    </p>
+                    <p>
+                        BitMagic implementation of Rank-Select compressed vector combines two methods: NULL compression
+                        implemented with Rank-Select method AND bit-transposition.
+                        Bit transposition implements a succinct variant of variable bit codec.
+                    </p>
+
+                    <p>
+                        Combination of both methods in one container allows to achieve better in-memory
+                        compation without loosing ability to search and access data, trading CPU penalty for memory and
+                        disk storage efficiency.
+                    </p>
+
+                    <p>
+                        Rank-Select compressed container is useful for basic Information Retrieval problems of TF-IDF
+                        (term frequency inverse document frequency) analysis. Performance of random access to container
+                        elements on the indexing phase can be very limiting.
+                        It was noticed that there are use cases when we know the vector index composition (not NULL elements)
+                        up front. In other words, we know our terms dictionary (but not frequency of occurrence of each term)
+                        and we can exploit this knowledge by pre-initializing the RSC vector and building a
+                        Rank-Select index. Later update of terms frequencies on known elements would run significantly faster.
+                    </p>
+                    <h3>Code snippet on how to use "known NULL" RS-index assisted access mode</h3>
+<pre><code>
+    typedef 
+    bm::sparse_vector&lt;unsigned, bm::bvector&lt;&gt; &gt; sparse_vector_u32;
+    typedef 
+    bm::rsc_sparse_vector&lt;unsigned, sparse_vector_u32&gt; rsc_sparse_vector_u32;
+
+
+    int main(void)
+    {
+        // vector of not NULL elements
+        bm::bvector&lt;&gt;         bv1 { 10, 20, 100, 200, 65536 };
+        rsc_sparse_vector_u32 csv1(bv1);
+
+        csv1.sync(); // build Rank-Select index for faster access
+        bv1.clear(); // we don't need bv1 anymore
+
+        // modify vector elements but only touch the not NULL elements
+        // for fast access
+        //
+        csv1.set(100, 1);
+        csv1.set(20, 1);
+        csv1.inc(10);
+        csv1.inc(65536, 1);
+
+        assert(csv1.in_sync()); // Rank-Select index works after changes
+        ...
+    }
+</code></pre>
+
+                    <p>
+                        Please note that RSC container handles "contract violation", so if you start modifying "wrong"
+                        elements it will just disable RS-index and just use regular slow mode. One possible future
+                        improvement would be to update and maintain the RS-index on the fly - this is an area of
+                        improvement for BitMagic.
+                    </p>
+
+                    <h3>Performance measurements</h3>
+
+                    <p>
+                        BitMagic 6.4.0 implements a synthetic benchmark measuring the effects of known element access.
+                        As you can see new mode makes it run orders of magnitude faster, allowing fast term-frequency
+                        counting in compact memory.
+                    </p>
+                    <br />
+                    <p>
+                        <div class="9u">
+                            <span class="image fit"><img src="images/bench/rsc_set.png" alt="" /></span>
+                        </div>
+
+                    </p>
+
+                    <p>
+                        RS-index assisted access benefits from SIMD acceleration with SSE4.2 or AVX2/BMI2.
+                        A quick note on BMI2. The measurements listed here were taken using Intel CPU, where BMI2 is faster
+                        than AMD Zen architecture. In our experince the relative weakness of BMI2 on AMD does not preclude
+                        from using it in pratical applications, hopefully AMD will make steps to improve performance of BMI2
+                        instructions in their future CPUs.
+                    </p>
+
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

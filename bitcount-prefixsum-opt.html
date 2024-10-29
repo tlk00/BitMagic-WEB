@@ -1,0 +1,223 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Prefix sum optimizations of Rank-Select.</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>Population counting, Rank-Select and prefix sum operations in BitMagic Library</h1>
+                            <p>Anatoliy Kuznetsov. Jan, 2018. anatoliy_kuznetsov@yahoo.com </p>
+                            
+    <h2>Introduction</h2>
+	
+	<p>Population counting (or bit counting) is common operation with applications in database, 
+       information retrieval systems, as a building block for address space flattening, I/O indexing, etc. 
+       BitMagic library provides set of tools and functions to help with this operations. 
+       This mini-artcile reviews reviews a set of methods used for population counting. 
+       Quick review of various methods, applicability and SIMD optimizations potential (SSE 4.2 and AVX2) 
+       to help BitMagic Library users choose the best method for each case.
+	</p>
+
+    <h3>Rank operation</h3>
+
+    <p>BitMagic supports various operations to iterate over a range in bit-vector and update a counter if it finds a 1 bit. 
+      This is often called a rank operation. The operation rank(i) is defined as the number of set bits (1s) in the range 
+        <strong>[0, i]</strong>. Another aspect of rank operation is whether bit <strong>i</strong> is set or not.
+    </p>
+    
+    <span class="image"><img src="images/rank.png" alt="Rank operation" /></span>
+
+
+	<h3>Test data</h3>
+
+    <p>For performance testing we generate a synthetic benchmark bit-vector, with combination of pseudo random and 
+       sparse areas. Benchmark bit-vector will contain a mix of bit and gap (prefix sum compressed) blocks 
+       with approximately 2:1 ratio (2 sparse blocks to one bit block). In our experince this approximates many real
+       systems. BitMagic supports various optimizations for all types of blocks: plain uncompressed and d-gap(prefix sum).
+    </p>
+
+    <h2>Population counting methods</h2>
+
+    <h3>1. Whole bit-vector population counting bm::bvector<>::count()</h3>
+
+    <p>This is the most straight forward set operation, subject of multiple studies. 
+       Typically it is well accelerated using HW instructions for population counting or parallel bit-counting 
+       techniques with SIMD vectors. BitMagic library adopts all the techniques, as part of SSE4.2 and AVX2 
+       optimizations. It also implements parallel SIMD accelerated population counting on compressed vectors using 
+       integer SSE and AVX vector instructions.</p>
+
+    <h3>2. Range population counting bm::bvector<>::count_range()</h3>
+
+    <p>Range bound population counting, helps to evaluate the sub-set of bit-vector in the 
+       closed range diapason of [X1..X2]. This is a common operation to compute a “true distance” 
+       (number of elements by bit mask). This operation can be used in construction of sparse vectors, 
+       I/O indexing schemes, graphical algorithms, etc. 
+       This type of operation is a subject of SIMD acceleration, just like simple count(). 
+       For immutable, read-only bit-vectors there is also an option of building a skip-list 
+       with pre-calculated population counts.</p>
+
+    <h3>3. Range population counting bm::bvector<>::count_range() with block count list</h3>
+
+    <p>Variant of 2, but uses pre-calculated acceleration structure (skip list). 
+       This method works well for read-only immutable or rarely mutating bit vectors.</p>
+
+    <h3>4. Distance population counting with bm::bvector<>::count_to()</h3>
+
+    <p>Conceptually this operation is equivalent of range counting of [X1..X2] interval for the special case of X1=0. 
+       This operation is very important for construction of sparse vectors and address space flattening and deserves 
+       special optimizations. BitMagic implements prefix-sum accelerated version with an ongoing effort to further 
+       improve this operation for SIMD enabled computers.</p>
+
+    <h3>5. Range count using two calls to count_to()</h3>
+
+    <p>Trivial equivalent operation, in many cases works faster than plain count_range().</p>
+
+    <h3>6. Similarity based algorithm bm::count_and()</h3>
+
+    <p>This method is more versatile than everything described above. 
+       We construct a mask bit-vector and perform set algebraic intersection (AND) to calculate population. 
+       BitMagic library implements this operation without materializing the result vector, 
+       using operations pipelining techniques to optimize CPU cache access and SIMD optimizations. 
+       This method is important for scientific similarity measures/distances and the likes.</p>
+
+    <h3>7. Iterator decode of the bit-vector with bm::bvector::counted_enumerator()</h3>
+   
+    <p>BitMagic library implements const forward iterators (<code>bm::bvector::enumerator()</code> and its variant 
+        <code>bm::bvector::counted_enumerator()</code>) to decode bit-vector into indexes of ON bits without materialization of an 
+       intermediate array. This utility of this operation is more, than plain population counting and it is 
+       expected to be slower.
+    </p>
+
+                            <h2>Benchmarks</h2>
+
+       <span class="image fit"><img src="images/bench/sample11-score.png" alt="sample 11 benchmark results" /></span>
+       <p align="center"><strong>Benchmark results (ops/sec, higher is better)</strong></p>
+
+                            <h2>Conclusions</h2>
+
+                            <p>Our results are pretty self evident here: we see, that prefix sum methods win with a huge margin
+                            and should be used where possible. BitMagic library responds well to optimizations based on hardware 
+                            POPCNT (SSE 4.2) and 256-bit AVX2 instruction sets. Optimization defines <code>#define BMSSE42OPT</code> 
+                            and <code>#define BMAVX2OPT</code> should be used where it is available. SSE 4.2 is aged back to 2009 and now can 
+                            be a practical default for server and HPC targets. It makes a huge difference in performance critical code.
+                            </p>
+
+                            <p>Tests shows only marginal improvement for <code>bvector<>::enumerator</code> test case on vectorized builds.
+                            This is a side-effect of the choosen bit distribution 2:1 pattern. enumerator depends on hardware POPCNT
+                            (available in SSE 4.2), but traversal of compressed block curently uses non-vectorized algorithm.
+                            </p>
+
+                            <h4>Source Code</h4>
+                            <p>Testing results were collected with BitMagic Library v.3.10.1.</p>
+                            <p>
+                                <a href="http://bitmagic.io/doxygen/html/sample11_8cpp-example.html">http://bitmagic.io/doxygen/html/sample11_8cpp-example.html</a>
+                                <br />OR <br />
+                                <a href="https://github.com/tlk00/BitMagic/blob/master/samples/bvsample11/sample11.cpp">https://github.com/tlk00/BitMagic/blob/master/samples/bvsample11/sample11.cpp</a>
+                            </p>
+
+                            <h4>System description</h4>
+                            <pre>
+INTEL(R) CORE(TM) I5-6500 CPU @ 3.20GHZ 14nm, 6MB Cache, TDP 65W, max turbo frequency 3.6GHZ
+The Core i5-6500 is an intermediate model of the Intel sixth-generation (Skylake) Core i5 family.
+
+We ran this test on a few other systems but this mid-range CPU looks representative for
+benchmarking. 
+
+Compiler settings (GCC): -march=core2 -O2 -g0
+
+g++ --version
+Configured with: --prefix=/Applications/Xcode.app/Contents/Developer/usr --with-gxx-includedir=/usr/include/c++/4.2.1
+Apple LLVM version 9.0.0 (clang-900.0.38)
+Target: x86_64-apple-darwin16.7.0
+Thread model: posix
+</pre>
+
+                            <h2>References</h2>
+                            <p>1. Alex Bowe. “RRR – A Succinct Rank/Select Index for Bit Vectors”.
+                            <a href="http://alexbowe.com/rrr/">http://alexbowe.com/rrr/</a></p>
+                            <p>
+                             2. GPU Gems 3. “Chapter 39. Parallel Prefix Sum (Scan) with CUDA”.
+                             <a href="https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html">https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch39.html</a>
+                            </p>
+
+</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

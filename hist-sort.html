@@ -1,0 +1,323 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic Library performance</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>Histogram construction with counting sort using BitMagic bm::sparse_vector<> container</h1>
+                            <p>Anatoliy Kuznetsov. Apr, 2018. anatoliy_kuznetsov@yahoo.com </p>
+
+                            <h2>Introduction</h2>
+
+                            <p>
+                                This application note describes an application of counting sort for unsigned integers using BitMagic <code>bm::sparse_container&lt; &gt;</code>.
+                                Sparse container implements run-time bit transposition and compression techniques to improve memory footprint.
+                                Use of simple counting sort is naturally limited to cases, where input numbers are bound to a specific dynamic range of values.
+                                In undefined large ranges counting sort may require lots of memory.
+                                sparse_vector<> partially solves this problem and provides mechanism for efficient use of counting sort, construct histogram of values, compute mode value of
+                                the input integer sequence.
+                            </p>
+
+                            <p>Counting sort is not the only method, so here I evaluate different approaches to histogram construction.</p>
+                            <p>Histogram construction has wide utility in statistics, database query plan optimizations, visualization of data, compression, probability and other areas.</p>
+
+                            <h3>Data structure</h3>
+                            <p>
+                                bm::sparse_vector<> is used for a target data structure for histogram. This container offers bit transposition compression and serialization to save the
+                                compressed histogram object.
+                            </p>
+
+                            <p>Another possible alternative used for comparison purposes is <code>std::map&lt;unsigned, unsigned&gt;</code>, which implements a R-B tree.</p>
+
+                            <p>Another alternative would be to use hash structure, something is not covered in this case study (future work).</p>
+
+                            <pre><code>
+typedef bm::sparse_vector&lt;unsigned, bm::bvector&lt; &gt; &gt; sparse_vector_u32;
+typedef std::map&lt;unsigned, unsigned&gt;                           map_u32;
+                            </code></pre>
+
+                            <h3>QuickSort (std::sort) based method</h3>
+                            <p>
+                                The most straight-forward way to build a histogram of unsorted array of integers is to sort it first using one of the available algorithms O(N log N),
+                                then build a sorted histogram of values in one linear pass over the array.
+                            </p>
+
+                            <p>Code below assumes the input vector comes sorted.</p>
+                            <pre><code>
+void build_histogram(sparse_vector_u32& sv_out, const std::vector&lt;unsigned&gt;& vin)
+{
+    if (vin.empty())
+        return;
+    unsigned start = vin[0];
+    unsigned count = 0; // histogram counter
+    for (auto v : vin)
+    {
+        if (v == start)
+        {
+            ++count;
+        }
+        else
+        {
+            sv_out.set(start, count);
+            start = v; count = 1;
+        }
+    }
+    if (count)
+    {
+        sv_out.set(start, count);
+    }
+}
+    </code></pre>
+
+                            <h3>R-B Tree counting sort</h3>
+
+                            <p>
+                                C++ STL library offers a convenient (and popular) R-B tree implementation,
+                                which can be a basis for counting (in-place) sort. Counting sort using stl::map<> is very compelling in its simplicity.
+                                R-B Tree insert operations are evaluated as O(log N) which makes it a good candidate
+                                (from the theoretical standpoint).
+                            </p>
+
+                            <pre><code>
+void sort_map(map_u32& hmap, const std::vector&lt;unsigned&gt;& vin)
+{
+    for (auto v : vin)
+    {
+        hmap[v]++;
+    }
+}
+    </code></pre>
+                            <h3>Counting Sort with bm::sparse_vector<> (naive)</h3>
+
+                            <pre><code>
+void counting_sort_naive(sparse_vector_u32& sv_out, const std::vector&lt;unsigned&gt;& vin)
+{
+    for (auto v : vin)
+    {
+        auto count = sv_out.get(v);
+        sv_out.set(v, count + 1);
+    }
+}
+    </code></pre>
+                            <p>
+                                This method is in nature similar to hash containers.
+                                This method is totally applicable for cases when input data happen to come as a stream (unbounded array)
+                                and we need to perform transformation on the fly.
+                            </p>
+
+                            <p>Why is it labeled naive?</p>
+
+                            <p>
+                                BitMagic sparse_vector supports get()/set() access to elements, and we use it here,
+                                combined with an external value increment. Is it the most efficient? No.
+                                In this case we have to insure full penalty of extraction of full value from separate bit-vectors representing our bit-plains.
+                                Such access pattern will cause much higher penalty for extra computations and CPU cache misses.
+                            </p>
+
+                            <p>It is naive, because it is possible to do better!</p>
+
+                            <h3>Counting Sort with bm::sparse_vector<> ( using inc() )</h3>
+
+                            <p>
+                                Better way of doing the same is to use inc() method provided in BitMagic 3.11.0 (for sparse_vector&lt;&gt; and bvector&lt;&gt;).
+                                This method implements binary arithmetic increment with carry-over and designed to be more efficient with memory access patterns.
+                            </p>
+
+                            <pre><code>
+void counting_sort(sparse_vector_u32& sv_out, const std::vector<unsigned>& vin)
+{
+    for(auto v : vin)
+        sv_out.inc(v);
+}</code></pre>
+
+                            <h2>Benchmark</h2>
+
+                            <pre>
+1. counting sort ; 12321.1 ms
+2. std::sort() + histogram; 22686.7 ms
+3. counting sort (naive) ; 33629.4 ms
+4. counting sort (parallel) ; 8220.56 ms
+5. counting sort (map) ; 171814 ms
+    </pre>
+
+                            <p>
+                                <span class="image fit"><img src="images/bench/hist-bench.png" alt="Histogram construction" /></span>
+                                The benchmark generated 250000000 unsigned integers in the range of [0..1250000]
+                            </p>
+                            <br>
+                            <h3>Benchmark Notes</h3>
+                            <ol>
+                                <li>
+                                    QuickSort based on plain in-memory arrays outperformed naive version of counting sort.
+                                    This happened, because of the relatively high costs of access to random elements in sparse_vector (where BitMagic needs to keep working on performance tuning).
+                                    It is difficult to outperform an array, but we should keep trying. :)
+                                </li>
+
+
+                                <li>
+                                    BitMagic counting sort based on inc() faired well and very competitive, due to performance optimizations
+                                    done for the single value increment. I have to note that results may be dependent on the actual data
+                                    distribution patterns.
+                                </li>
+
+
+                                <li>
+                                    STL map - happens to be poor choice for histogram construction.
+                                    There are many reasons for that: memory fragmentation, inherently L1 cache unfriendly design of lists and trees.
+                                    In performance sensitive cases - map&lt;&gt; - avoid.
+                                </li>
+                            </ol>
+
+                            <h2>Parallel counting sort</h2>
+
+                            <p>
+                                This is VERY simple attempt to implement parallel counting sort using sparse_vector&lt;&gt; just to touch the water.
+                                Clearly, counting sort is a clear subject for divide and conquer parallelization with minimal final merge costs.
+                            </p>
+
+                            <h3>Implementation notes</h3>
+
+                            <ol>
+                                <li>
+                                    Problem divide criteria is intentionally simple: odd and even numbers.
+                                    Main thread works on one batch (odd) parallel - process even. Thus, chosen degree of parallelism is 2.
+                                </li>
+
+                                <li>Use of STL provided std::asyn() and futures. This is NOT the best paradigm for parallel programming in my opinion, but ok-ish for an experiment.</li>
+
+                                <li>
+                                    Use of <code>sparse_vector&lt;&gt;::join()</code> to merge the results.
+                                    Merge stage relies on that histograms are completely separate and uses bit-vector OR (the core of join) to combine the partial results.
+                                    This stage responds well to SIMD vectorization (vector-parallel operation). It should be possible to implement thread parallel join (maybe later).
+                                </li>
+                            </ol>
+
+
+                            <pre><code>
+unsigned counting_sort_subbatch(sparse_vector_u32* sv_out, const std::vector<unsigned>* vin)
+{
+    for (size_t i = 0; i < vin->size(); i++)
+    {
+        auto v = (*vin)[i];
+        if ((v & 1) == 0)
+            sv_out->inc(v);
+    }
+    return 0;
+}
+
+void counting_sort_parallel(sparse_vector_u32& sv_out, const std::vector&lt;unsigned&gt;& vin)
+{
+    sparse_vector_u32 sv_out2(bm::use_null);
+    // process evens in parallel
+    std::future&lt;unsigned&gt; f1 = std::async(std::launch::async, counting_sort_subbatch, &sv_out2, &vin);
+
+    // process all odd elements
+    for (size_t i = 0; i < vin.size(); i++)
+    {
+        auto v = vin[i];
+        if (v & 1)
+            sv_out.inc(v);
+    }
+    f1.wait();
+    sv_out.join(sv_out2);
+}
+    </code></pre>
+
+                            <p>
+                                2x parallel implementation is very simple, despite its simplicity according to benchmark results it outperforms
+                                single threaded variant by 40%. 30 lines of code well spent.
+                            </p>
+
+                            <h3>Source code</h3>
+
+                            <p><a HREF="https://github.com/tlk00/BitMagic/tree/master/samples/xsample02">xsample2.cpp</a></p>
+
+                            <h3>See also</h3>
+                            <ol>
+                                <li><a HREF="http://bitmagic.io/doxygen/html/classbm_1_1sparse__vector.html">sparse_vector (doxygen)</a></li>
+                                <li><a HREF="https://github.com/tlk00/BitMagic/tree/master/samples">Samples on GitHub</a></li>
+                                <li><a HREF="http://bitmagic.io/doxygen/html/examples.html">BitMagic library examples (doxygen) (see all sv* folders)</a></li>
+                            </ol>
+
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

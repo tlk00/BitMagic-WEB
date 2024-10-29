@@ -1,0 +1,160 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 3.19.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+
+                            <header>
+                                <h1>Version 3.19.0</h1>
+                                <span class="date">Jan 25, 2019</span>
+                            </header>
+
+                            <p></p>
+                            <h2>Release Notes</h2>
+
+                            <ol>
+                                <li>
+                                    BitMagic v.3.19.0 implements 3-operand logical operations for Algebra of Sets.
+                                    <code>TARGET := SRC1 opcode SRC2</code>. Both source operands remain unmutable. 
+                                    3-operand functions can now perform on the fly optimization/compression of the traget. 
+                                    In many cases 3-operand operations are substantially faster than 2-operand logic due 
+                                    to more effcient CPU data cache reuse and reduced number of memory copies. 
+                                    New operations use SSE2, SSE4.2 and AVX2 optimizations.
+
+<h4>Code example:</h4>                                    
+
+<pre>
+<code>
+#include "bm.h"
+    {
+        bm::bvector&lt;&gt;   bv_T;
+        bm::bvector&lt;&gt;   bv_A { 1, 2, 3 };
+        bm::bvector&lt;&gt;   bv_B { 1, 2, 4 };
+
+        bv_T.bit_or(bv_A, bv_B, bm::bvector<>::opt_compress); // bv_T :=  bv_A | bv_B (with on the fly compression)
+        
+        print_bvector(bv_T); // 1, 2, 3, 4 (size = 10)
+    }
+</code>
+</pre> 
+ 
+
+                                </li>
+
+                                <li>
+				    Documentation / examples improvements:
+                                    Created new tutorial on BitMagic implementation of                                    
+                                    <a href="set-algebra.html">Algebra of Sets</a>.
+                                    New tutorial comes with an example, showing how to implement set theoretical
+                                    operations on bit-vectors, groups of vector (aggregator), 
+                                    integer arrays, serialized/compressed BLOBs of data,
+                                    STL iterators. New tutorial and example project illustrates more than 30 different
+                                    APIs useful in different information retrieval or database situations.
+                                    <br />
+            <p>
+                <a href="doxygen/html/bvsetalgebra_8cpp-example.html">Doxygen formatted example</a>
+            </p>
+            <p>
+                <a href="https://github.com/tlk00/BitMagic/tree/master/samples/bvsetalgebra">GitHub example</a>
+            </p>
+
+                                </li>
+                                <li>New method to insert bit <code>bvector&lt;&gt;::insert(..)</code> 
+                                    plus a sample to illustrate bit-insertions and bit-shift.
+                                    Bit insert is needed for fully editable succinct data structures and 
+                                    bit-transposed containers and matrices. 
+            <p>
+                <a href="doxygen/html/sample20_8cpp-example.html">example 20</a>
+            </p>
+
+                                </li>
+
+                            </ol>
+
+
+
+                            <br />
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic3.19.0/" class="button">Download v 3.19.0</a></p>
+                        </section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,138 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic Library performance</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>Performance tests and benchmarks</h1>
+                            
+							<h2>Introduction</h2>
+
+                            <p>
+                            BitMagic Library implements various optimization techniques to deliver consistent performance
+                            in various programming environments. BitMagic library minly focuses on algorithms used in search
+                            systems and databases, but it was used in visualization algorithms and desktop tools as well.
+                            </p>
+                            
+                            <p>We would like to summrize the performance optimization factors we find most important in
+                            production systems operating on a petabyte scale (or thousands of transactions per second).
+                            </p>
+                            
+                            <h2>Performance factors</h2>
+                            
+                            <ul>
+                                <li>General optimization of algorithms, loop unrolling, marked pointers, use of old but true optimization tricks
+                                created back when computer programming was an art. Contemporary compilers are very good, but well written code
+                                makes compilers excel.
+                                </li>
+                                
+                                <li>Cache aware algorithms. Correct structuring of algorithms to use CPU on chip memory (CPU cache).
+                                This is one of the most efficient optimization techniques allows to minimize access to memory.
+                                </li>
+                                
+                                <li>Optimization of memory allocations. Again, contemporary runtime libraries are wonderfully
+                                great, but they benefit from algorithms using aligned, structured allocation patterns. Practical productions
+                                systems often suffer severe performance penalties from allocating millions of small objects and reliance on
+                                off the shelf memory management. BitMagic library allows to customize its work even for most complex situations,
+                                when other parts of the system are not exactly good neighbors and cause heap fragmentation and degradations due
+                                to allocation penalties.
+                                </li>
+                                
+                                <li>SIMD and 64-bit optimizations. BitMagic automatically adapts to 64-bit compilation and can be compiled to
+                                use SSE2, SSE4.2 and AVX2 instructions. Effectiveness of SSE4.2 varies depending on situation, but we often see
+                                performance improvement of up to 30% on SSE4.2 optimized algorithms due to enabled hardware population count.
+                                AVX2 optimizations (available from 3.10.0) give even better performance.
+                                </li>
+                                
+                                <li>Flexible compression for storage and network transfer. Extra compression for storage always pays off, because
+                                I/O and network are very often a bottleneck. From version to version we are trying to make serialization more compact
+                                to save performance in I/O chains.
+                                </li>
+                            </ul>
+                            
+                            <p>TO BE CONTINUED.</p>
+
+
+
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

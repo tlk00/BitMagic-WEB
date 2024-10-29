@@ -1,0 +1,127 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 5.0.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <header>
+                                <h1>Version 5.0.0</h1>
+                                <span class="date">July 20, 2019</span>
+                            </header>
+                            <p></p>
+                            <h2>Release Notes</h2>
+                            <ol>
+                                <li>
+                                    Fixed crash related to agressive -O3 optimizations on GCC
+                                </li>
+
+                                <li>
+                                    Implemented new algorithm: lower_bound search for integer in
+                                    bit-transposed container: <code>bm::sparse_vector_scanner&lt;&gt;::lower_bound()</code>
+                                    Documented as an API sample:
+                                    <a href="https://github.com/tlk00/BitMagic/blob/master/samples/svsample07/svsample07.cpp">svsample07.cpp</a></p>
+                                </li>
+
+                                <li>
+                                    New compressed serialization of bit-vectors using Binary Interpolated Encoding (Center Minimal).
+                                    Tested on Gov2 collection it gives approximately 25% improvement in disk footprint comparing to
+                                    previous version which was using Delta Elias Gamma encoder.
+                                    New serialization is backward compatible, BitMagic will read old BLOBs.
+                                    New serialization default is level 5. If you like to keep using Elias Gamma - use level 4.
+                                </li>
+
+                            </ol>
+                            <p>
+                                Figure below illustrates new compression numbers using two Gov2 inverted list benchmark sets, sorted and unsorted.
+                            </p>
+                            <span class="image center"><img src="images/bench/bm5-gov2.png" width="512" alt="BitMagic 5.0.0 serialization efficiency" /></span>
+
+                            <p><a href="bm5-bic.html">More data</a></p>
+
+                            <h4>Acknowledgements</h4>
+                            <p>
+                                While working on version 5 we used benchmarking sets provided by Daniel Lemire and Leonid Boytsov.
+                            </p>
+                            <br />
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic5.0.0/" class="button">Download v 5.0.0</a></p>
+                        </section>
+					</section>
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

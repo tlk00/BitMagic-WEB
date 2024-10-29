@@ -1,0 +1,991 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic C++ APIs</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="set-algebra.html">Algebra of Sets</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+
+                            <header>
+                                <h1>BitMagic C++ Library: APIs</h1>
+                            </header>
+                            <p><span class="date">Oct, 2019</span> (last updated for BitMagic v.5.2.0)</p>
+
+
+                            <h3>BitMagic C++ is a header only library</h3>
+
+                            <div class="table-wrapper">
+
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Header</th>
+                                            <th>Description</th>
+                                            <th>Link(s)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td><b>bm.h / bm64.h</b></td>
+                                            <td>
+                                                Root of BitMagic APIs, implements <code>bm::bvector&lt;&gt;</code>.
+                                                Iterators, methods and functions implementing container and main set algebraic operations.
+                                                Very often, this is just enough to start working with bit sets. Main building block for
+                                                inverted indexes, matrices of relationships, bloom filters, high dimentional
+                                                binary classifications. Even when compiled on 64-bit system BitMagic by
+                                                default uses 32-bit element address space (unsigned int). "bm64.h" allows you to
+                                                turn on 64-bit mode (you have Big Data problem!).
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bm_8h.html">bm.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmserial.h</b></td>
+                                            <td>
+                                                Classes and methods to transform bvector&lt;&gt; into a compact BLOB, ready for disk I/O,
+                                                network transfer or database storage. Utilities to restore/deserialize bit-vector.
+                                                Methods to perform logical operations between bit-vector and its compact, serialized BLOB.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmserial_8h.html">bmserial.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmalgo.h</b> <b>bmalgo_impl.h</b></td>
+                                            <td>
+                                                Algorithms with bit vectors to compute similarity/distance metrics
+                                                and components of complex metrics efficiently, without producing intermediate temporary
+                                                bit vectors. Logical operations to efficiently combine bit vectors and C arrays (or STL iterators).
+                                                Template algorithms to visit bvector&lt;&gt; set elements.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmalgo_8h.html">bmalgo.h</a>
+                                                <a href="doxygen/html/bmalgo__impl_8h.html">bmalgo_impl.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmaggregator.h</b></td>
+                                            <td>
+                                                Fast logical operations on groups of bit-vectors.
+                                                OR, AND, SUB and SHIFT-AND aggregators. Works faster than separate logical
+                                                operations as it uses cache line optimizations and SIMD.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmaggregator_8h.html">bmaggregator.h</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>bmintervals.h</b></td>
+                                            <td>
+                                                Algorithms for intervals and ranges in bit-vector.
+                                                Bit-vectors can be interpreted as sets of contiguous 1s
+                                                (flanked by 0s like <code>'011110'</code>),  this header offers tools for that.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmintervals_8h.html">bmintervals.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmrandom.h</b></td>
+                                            <td>
+                                                <code>bm::random_subset&lt;&gt;</code> - template utility to do random sampling of bit-vectors.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmrandom_8h.html">bmrandom.h</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><b>bm3vl.h</b></td>
+                                            <td>
+                                                Collection of utility functions for 3-valued logic (Kleene).
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bm3vl_8h.html">bm3vl.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmsparsevec.h</b></td>
+                                            <td>
+                                                <code>bm::sparse_vector&lt;&gt;</code> - container for bit-transposed (integer) arrays.
+                                                Each bit plain represented as compressed bit-vector, implements a form of in-memory
+                                                compression for scalar integer types. Sparse vector supports NULL (unassigned) values
+                                                semantics. Can be used for memory efficient time series vectors, events, histograms,
+                                                pre-calculated relationship operations, elements of matrix storage, graph connect lists,
+                                                bloom filters, b-bit indexing.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmsparsevec_8h.html">bmsparsevec.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmstrsparsevec.h</b></td>
+                                            <td>
+                                                <code>bm::str_sparse_vector&lt;&gt;</code> - container for bit-transposed array of strings.
+                                                This container is both memory compact and allows efficient search via BitMagic
+                                                sparse vector scanner.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmstrsparsevec_8h.html">bmstrsparsevec.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmsparsevec_compr.h</b></td>
+                                            <td>
+                                                <code>bm::rsc_sparse_vector&lt;&gt;</code> - rank-select succinct container for
+                                                bit-transposed (integer) arrays.
+                                                Just like bm::sparse_vector&lt;&gt - each bit plain represented as compressed bit-vector, implements a form of in-memory
+                                                compression for scalar integer types. Sparse vector supports NULL (unassigned) values
+                                                semantics. Ranl-select succinct vector use this (not) NULL vector to drop missing values
+                                                (bit columns in bit-transposed format) to improve memory efficiency.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmsparsevec__compr_8h_source.html">bmsparsevec_compr.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmsparsevec_algo.h</b></td>
+                                            <td>
+                                                Algorithms based on bit-transposed sparse vector properties.
+                                                Dynamic range clipping, set-algebra on plains, efficient searches in
+                                                unsorted vectors.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmsparsevec__algo_8h.html">bmsparsevec.h</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td><b>bmsparsevec_serial.h</b></td>
+                                            <td>
+                                                Serialization and de-serialization of sparse vector into compact and portable BLOB.
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/bmsparsevec__serial_8h.html">bmsparsevec_serial.h</a>
+                                            </td>
+                                        </tr>
+
+
+                                    </tbody>
+                                </table>
+
+                            </div>
+
+                            <h2>API examples and technical notes</h2>
+
+                            <h2>Bit-vector</h2>
+
+                            <p>
+                                Bit-vector container, iterators, serialization and algorithms.
+                            </p>
+
+
+                            <h3>Algebra of Sets</h3>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Algebra of Sets</td>
+                                            <td>Algorithms implementing various operations of Algebra of Sets.</td>
+                                            <td><a href="set-algebra.html">Tutorial</a></td>
+                                            <td>
+                                                <a href="doxygen/html/bvsetalgebra_8cpp-example.html">bvsetalgebra.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Three-valued logic (Kleene)</td>
+                                            <td>Algorithms of 3-valued logic on bit-vectors.</td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/bv3vlogic_8cpp-example.html">bv3vlogic.cpp</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+
+                            <!-- Table -->
+                            <h3>bm::bvector&lt;&gt;</h3>
+
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>bm::bvector&lt;&gt; container</td>
+                                            <td>Main container for inverted lists representation. Depending on settings it can store lists of integers or bit-vectors.</td>
+                                            <td><a href="doxygen/html/classbm_1_1bvector.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample1_8cpp-example.html">sample1.cpp</a>
+                                                <a href="doxygen/html/sample2_8cpp-example.html">sample2.cpp</a>
+                                                <a href="doxygen/html/sample3_8cpp-example.html">sample3.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>bm::bvector&lt;&gt;::reference</td>
+                                            <td>Accessor to use regular C++/STL operator conventions to assign container content</td>
+                                            <td><a href="doxygen/html/classbm_1_1bvector_1_1reference.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample1_8cpp-example.html">sample1.cpp</a>
+                                                <a href="doxygen/html/sample9_8cpp-example.html">sample9.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>bm::combine_*() operations </td>
+                                            <td>Set Alebra algorithms for interoprability between arrays and bit vectors</td>
+                                            <td><a href="doxygen/html/group__setalgo.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample7_8cpp-example.html">sample7.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>bm::bvector&lt;&gt;::enumerator</td>
+                                            <td>Constant iterator to traverse inverted list without explicit conversion into unpacked list of integers</td>
+                                            <td><a href="doxygen/html/classbm_1_1bvector_1_1enumerator.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample5_8cpp-example.html">sample5.cpp</a>
+                                                <a href="doxygen/html/sample8_8cpp-example.html">sample8.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>bm::bvector&lt;&gt;::counted_enumerator</td>
+                                            <td>
+                                                Constant iterator to traverse inverted list without explicit conversion into unpacked list of integers.
+                                                It offers extra functinality of keeping a running sum of all ON bits it traversed from position 0 to current.
+                                            </td>
+                                            <td><a href="doxygen/html/classbm_1_1bvector_1_1counted__enumerator.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample11_8cpp-example.html">sample11.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>bm::bvector&lt;&gt;::insert_iterator</td>
+                                            <td>insert iterator to feed inverted list into bit-vector</td>
+                                            <td><a href="doxygen/html/classbm_1_1bvector_1_1insert__iterator.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample8_8cpp-example.html">sample8.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Serialization</td>
+                                            <td>Utilities and algorithms to compress and serialize bit-vector for database storage or network transfer</td>
+                                            <td><a href="doxygen/html/group__bvserial.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample4_8cpp-example.html">sample4.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Allocator</td>
+                                            <td>
+                                                API to re-define standard bvector&lt;&gt; alocator type to create special pool allocation strategy, thread local mamory pools,
+                                                collect bit-vector related memory activity statistics, etc.
+                                            </td>
+                                            <td><a href="doxygen/html/group__alloc.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample6_8cpp-example.html">sample6.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Bit counting</td>
+                                            <td>
+                                                Various methods and techniques to do bit counting for the whole bit-vector, ranges,
+                                                via accelerated structures or iterations. Performance benchmarking for different methods.
+
+                                            </td>
+                                            <td><a href="http://bitmagic.io/bitcount-prefixsum-opt.html">Details</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample11_8cpp-example.html">sample11.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Setting bits</td>
+                                            <td>
+                                                Various methods and techniques to set bits in bit-vectors, ranges of bits, bits flipping/swapping,
+                                                load bits from a set of ints, extraction of bits. Performance benchmarking for different methods.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample12_8cpp-example.html">sample12.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Logical operations on serialized bit-vectors</td>
+                                            <td>
+                                                Example on how to perform logical operations on bit-vecor BLOBs without
+                                                necessarily materializing them into a random-access bit-vector.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample14_8cpp-example.html">sample14.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Finding first and last elements of bit-vectors</td>
+                                            <td>
+                                                Example on how to determine bit-vector start and end bits (dynamic range).
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample15_8cpp-example.html">sample15.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                bm::aggregator&lt;&gt; - algorithms for fast AND, OR aggregation of groups of vectors.
+                                            </td>
+                                            <td>
+                                                Example on how to initialize, setup and use bm::aggregator&lt;&gt;
+                                            </td>
+                                            <td>
+                                                <a href="aggregator.html">Tech.notes</a>
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/sample16_8cpp-example.html">sample16.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                bm::bvector&lt;&gt; - methods for rank and select
+                                            </td>
+                                            <td>
+                                                Example on how to build and use rank-select index
+                                            </td>
+                                            <td>
+                                                <a href="rank-select.html">Tech.notes</a>
+                                            </td>
+                                            <td>
+                                                <a href="doxygen/html/sample17_8cpp-example.html">sample17.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                bm::bvector&lt;&gt;::bulk_insert_iterator
+                                            </td>
+                                            <td>
+                                                Example on how to set bits fast using STL compatible bulk insert iterator.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample18_8cpp-example.html">sample18.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                bm::bvector&lt;&gt;::merge()
+                                            </td>
+                                            <td>
+                                                Merge operation is an equivalent of logical OR, but faster
+                                                because it moves memory blocks from the agrument vector.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample19_8cpp-example.html">sample19.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                bm::bvector&lt;&gt;::shift_right(),
+                                                bm::bvector&lt;&gt;::insert()
+                                            </td>
+                                            <td>
+                                                Bit-shift right and insert operations.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample20_8cpp-example.html">sample20.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>
+                                                bm::bvector&lt;&gt;::shift_left(),
+                                                bm::bvector&lt;&gt;::erase()
+                                            </td>
+                                            <td>
+                                                Bit-shift left and erase operations.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample21_8cpp-example.html">sample21.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>
+                                                bm::bvector&lt;&gt;::is_all_one_range(..),
+                                                bm::bvector&lt;&gt;::any_range(..),
+                                                bm::bvector&lt;&gt;::keep_range(..),
+                                                bm::bvector&lt;&gt;::clear_range(..),
+                                                bm::bvector&lt;&gt;::set_range(..),
+                                                bm::is_interval(..),
+                                                bm::find_interval_end(..),
+                                                bm::find_interval_start(..),
+                                                bm::deserialize_range(..)
+                                            </td>
+                                            <td>
+                                                RLE/dGAP compressed bit-vectors can be used for efficient operations
+                                                on ranges and intervals. This example illustartes algorithms
+                                                for bit-intervals.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample22_8cpp-example.html">sample22.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>
+                                                bm::interval_enumerator&lt;&gt;
+                                            </td>
+                                            <td>
+                                                Forward iterator-like class for interpreting of bit-vector as a sequence of
+                                                1-set intervals ('01110').
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample23_8cpp-example.html">sample23.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>
+                                                bm::rank_range_split(..)
+                                            </td>
+                                            <td>
+                                                Split bit-vector into inetrvals of equal rank. 
+                                                Use case: parallel algorithms guided by bit-vector. 
+                                                New algorithm helps to break bit-vector into ranges (or sub-vectors) with
+                                                equal population count. Each sub-range becomes a processing job then.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/sample24_8cpp-example.html">sample24.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>64-bit bvector</h3>
+                            <p>
+                                BitMagic supports 64-bit address space for bit-vectors and succinct containers.
+                                Current limitation is that BitMagic supports "only" 48-bit address space.
+                            </p>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>bm::bvector&lt;&gt; container</td>
+                                            <td>
+                                                How to turn on 64-bit address mode.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/bvsample01_64_8cpp-example.html">bvsample01_64.cpp</a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>Algorithms for bm::bvector&lt;&gt;</h3>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Distances</td>
+                                            <td>Algorithms optimized for computing binary distances for clusterization of multi-dimentional binary spaces.</td>
+                                            <td><a href="doxygen/html/group__distance.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample9_8cpp-example.html">sample9.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Random sub-set</td>
+                                            <td>Algorithm binary subset randomization.</td>
+                                            <td><a href="doxygen/html/classbm_1_1random__subset.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/sample10_8cpp-example.html">sample10.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Miscelleneous</td>
+                                            <td>
+                                                Algorithms for combining(OR, XOR, SUB, AND) bvector&lt;&gt; with STL-compatible iterators.
+                                                Count number of intervals in bit-vector, etc.
+                                            </td>
+                                            <td><a href="doxygen/html/group__setalgo.html">More</a></td>
+                                            <td></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+                            <h3>Bit-transposed sparse vector bm::sparse_vector&lt;&gt;</h3>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>bm::sparse_vector&lt;&gt; container</td>
+                                            <td>Store array of integers using compact bit-transposed implementation and the arsenal of compression methods provided by bm::bvector&lt;&gt;</td>
+                                            <td><a href="doxygen/html/classbm_1_1sparse__vector.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/svsample01_8cpp-example.html">svsample01.cpp</a>
+                                                <a href="doxygen/html/svsample02_8cpp-example.html">svsample02.cpp</a>
+                                                <a href="doxygen/html/svsample03_8cpp-example.html">svsample03.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Serialization</td>
+                                            <td>Algorithms to compress and serialize bm::sparse_vector&lt;&gt; for storage or network transfer</td>
+                                            <td><a href="doxygen/html/group__svserial.html">More</a></td>
+                                            <td>
+                                                <a href="doxygen/html/svsample02_8cpp-example.html">svsample02.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Algorithms. Dynamic range clipping.</td>
+                                            <td>Algorithms on bit-transposed sparse vector. Dynamic range clipping.</td>
+                                            <td><a href="doxygen/html/group__svalgo.html">More</a></td>
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>sparse vector with NULL support</td>
+                                            <td>How to configure and use sparse vector with unassigned (NULL) elements</td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/svsample04_8cpp-example.html">svsample04.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Algorithms. Set to set image function.</td>
+                                            <td>
+                                                Theory of groups image function using sparse vector as
+                                                an association container defining set-to-set translation.
+                                            </td>
+                                            <td><a href="set2set-assoc-remap-opt.html">Tech.notes</a></td>
+                                            <td><a href="doxygen/html/svsample05_8cpp-example.html">svsample05.cpp</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Algorithms. Search in unordered set.</td>
+                                            <td>
+                                                Search in sparse vector, using scanner class.
+                                                How to bm::sparse_vector&lt;&gt; iterators. Benchmarks.
+                                            </td>
+                                            <td><a href="sparse-vector-search.html">Tech.notes</a></td>
+                                            <td><a href="doxygen/html/svsample06_8cpp-example.html">svsample06.cpp</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Algorithms. Lower Bound search in sorted container.</td>
+                                            <td>
+                                                Search in sparse vector, with scanner class and lower_bound().
+                                                This example shows how to implement insertion sort without unpacking
+                                                succinct vector.
+                                            </td>
+                                            <td></td>
+                                            <td><a href="doxygen/html/svsample07_8cpp-example.html">svsample07.cpp</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Selective deserialization</td>
+                                            <td>
+                                                How to extract range or list of elements from a compressed sparse
+                                                vector.
+                                            </td>
+                                            <td><a href="bm-5.2.0.html">Tech.notes</a></td>
+                                            <td><a href="doxygen/html/svsample08_8cpp-example.html">svsample08.cpp</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Mismatch search</td>
+                                            <td>
+                                                Fast mismatch search in sparse vectors.
+                                            </td>
+                                            <td><a href="bm-5.4.0.html">Tech.notes</a></td>
+                                            <td><a href="doxygen/html/svsample09_8cpp-example.html">svsample09.cpp</a></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>Rank-Select succinct bit-transposed sparse vector. bm::rsc_sparse_vector&lt;&gt;</h3>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>bm::rsc_sparse_vector&lt;&gt; container</td>
+                                            <td>
+                                                Introduction to <code>rsc_sparse_vector&lt;&gt;</code>.
+                                                Example shows how to load data, serialize and deserialize it.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/rscsample01_8cpp-example.html">rscsample01.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Selective deserialization</td>
+                                            <td>
+                                                How to extract range or list of elements from a compressed sparse
+                                                vector.
+                                            </td>
+                                            <td><a href="bm-5.2.0.html">Tech.notes</a></td>
+                                            <td><a href="doxygen/html/rscsample02_8cpp-example.html">rscsample02.cpp</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>bm::rsc_sparse_vector&lt;&gt;::const_iterator</td>
+                                            <td>
+                                                How to use const_iterator to access compressed container.
+                                            </td>
+                                            <td></td>
+                                            <td><a href="doxygen/html/rscsample03_8cpp-example.html">rscsample03.cpp</a></td>
+                                        </tr>
+                                        <tr>
+                                            <td>bm::rsc_sparse_vector&lt;&gt; known elements access</td>
+                                            <td>
+                                                Rank-Select container can be used for terms frequency counting
+                                                (TF-IDF) in compact memory. This example illustartes how to construct
+                                                a container with known elements and set or increment elements using
+                                                Rank-Select index which is a lot faster than the default mode.
+                                            </td>
+                                            <td><a href="bm-6.4.0.html">Tech.notes</a></td>
+                                            <td><a href="doxygen/html/rscsample04_8cpp-example.html">rscsample04.cpp</a></td>
+                                        </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>String bit-transposed sparse vector. bm::str_sparse_vector&lt;&gt;</h3>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>bm::str_sparse_vector&lt;&gt; container</td>
+                                            <td>
+                                                Introduction to <code>str_sparse_vector&lt;&gt;</code>.
+                                                Example shows how to add values, optimize (memory compression),
+                                                iterate elements.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/strsvsample01_8cpp-example.html">strsvsample01.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>bm::str_sparse_vector&lt;&gt; container, bm::sparse_vector_scanner&lt;&gt;</td>
+                                            <td>
+                                                insertion sort on bit-transposed collection of strings using BitMagic
+                                                <code>sparse_vector_scanner<></code>
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/strsvsample02_8cpp-example.html">strsvsample02.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>str_sparse_vector&lt;&gt;::back_insert_iterator</td>
+                                            <td>
+                                                <code>str_sparse_vector&lt;&gt;::back_insert_iterator</code> is used to load
+                                                the data, then sparse vector gets remaped, compressed and saved to disk using
+                                                serialization API. This techniques help to create index good for fast search.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/strsvsample03_8cpp-example.html">strsvsample03.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Vector with NULL (unassigned) values</td>
+                                            <td>
+                                                Operations with NULL(unassigned) values in bit-transposed sparse vectors.
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <a href="doxygen/html/strsvsample04_8cpp-example.html">strsvsample04.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Selective deserialization</td>
+                                            <td>
+                                                How to extract range or list of elements from a compressed sparse
+                                                vector.
+                                            </td>
+                                            <td><a href="bm-5.2.0.html">Tech.notes</a></td>
+                                            <td><a href="doxygen/html/strsvsample05_8cpp-example.html">strsvsample05.cpp</a></td>
+                                        </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3>Advanced Examples (mixed techniques)</h3>
+
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                            <th>Links</th>
+                                            <th>Examples</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Memory consumption / sparse sets</td>
+                                            <td>
+                                                Comparison of different methods of handling of sparse sets.
+                                                Memory and performance benchmarks. Described techniques can be used for in-memory acceleration of ER JOIN operations.
+                                            </td>
+                                            <td><a href="http://bitmagic.io/case-ER-join.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample01_8cpp-example.html">xsample01.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Counting Sort, construction of histograms</td>
+                                            <td>
+                                                Example, shows a how to make fast and memory efficient integer counting sort / histogram construction
+                                                using BitMagic sparse_vector<>. Speed benchmark of various techniques based on
+                                                QuickSort, R-B tree (stl::map<>), parallel version of counting sort.
+                                            </td>
+                                            <td><a href="hist-sort.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample02_8cpp-example.html">xsample02.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>SNP search with succinct sparse vector</td>
+                                            <td>
+                                                Example, shows a how to build and search memory compact vector of
+                                                mutations (SNPs), using real data from NCBI. Memory and
+                                                performance benchmark comparisons.
+                                            </td>
+                                            <td><a href="succinct-snp-search.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample03_8cpp-example.html">xsample03.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Substring search with fingerprints and SHIFT-AND</td>
+                                            <td>
+                                                Example, shows a how to build DNA fingerprints and use
+                                                different algorithms to search for a k-mer subsequence.
+                                                Benchmarking comparisons with more straight-forward approaches.
+                                            </td>
+                                            <td><a href="dna-search.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample04_8cpp-example.html">xsample04.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Fast bit-vector index construction</td>
+                                            <td>
+                                                Example, shows a how to build DNA fingerprints.
+                                                This is related to <a href="doxygen/html/xsample04_8cpp-example.html">xsample04.cpp</a> but
+                                                focuses of fast index construction, using SIMD and multi-threading.
+                                            </td>
+                                            <td><a href="dna-search-idx.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample04a_8cpp-example.html">xsample04a.cpp</a>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Memory efficient dictionary</td>
+                                            <td>
+                                                Example, shows a how to use <code>bm::str_sparse_vector&lt;&gt;</code>.
+                                                Sample uses data from NASA NED extragalactic database to build an efficient
+                                                dictionary using bit-transposed sparse matrix and characted remappings.
+                                                Sample illustrates binary search and scan search techniques.
+                                            </td>
+                                            <td><a href="star-search.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample05_8cpp-example.html">xsample05.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>DNA compression and mismatch search</td>
+                                            <td>
+                                                Example, shows a how to use <code>bm::str_sparse_vector&lt;&gt;</code>.
+                                                Sample uses DNA code tyo show 2-bit per char compression and
+                                                shows how to construct comparison function without decompression.
+                                                Benchmark comparisons with STL and C strcmp().
+                                            </td>
+                                            <td><a href="dna-compare.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample06_8cpp-example.html">xsample06.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>Genomic Viewer layout calculation</td>
+                                            <td>
+                                                Example, shows a how to use bit-interval algorithms and succinct data structures 
+                                                to create a toy genomics viewer (ASCII graphics is used for illustration).
+                                            </td>
+                                            <td><a href="gen-layout.html">Tech.notes</a></td>
+                                            <td>
+                                                <a href="doxygen/html/xsample08_8cpp-example.html">xsample08.cpp</a>
+                                            </td>
+                                        </tr>
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+                        </section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

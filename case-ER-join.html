@@ -1,0 +1,370 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Optimization of set-algebraic arrays for ER JOIN operations</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>Case study: optimization of set-algebraic arrays for ER JOIN operations</h1>
+                            <p>Anatoliy Kuznetsov. Nov, 2017.  anatoliy_kuznetsov@yahoo.com </p>
+                            
+    <h3>Introduction</h3>
+	
+	<p>This article analyzes the performance and memory characteristics of BitMagic library
+leveraging very sparse vectors while performing set algebra operations used for join
+acceleration. The goal of this case study is to analyze memory footprint of various types of set
+representations based on data generated to mimic analytical requests to join relational tables
+with one-to-many relationship and answer question of applicability of bit-vectors for RDBMS
+join acceleration.
+	</p>
+    
+    <p>Bit vectors provide functionality making it a compelling for use in set algebraic applications.
+Some applications deal with large in-memory datasets face problem of excessive memory
+consumption which may lead to disk centric I/O loaded designs. Excessive memory
+consumption can be reduced via in-memory compression techniques. Alternative design
+decision allow to build faster systems. Here we analyze alternative design decisions and trade
+oﬀs between memory consumption and speed. BitMagic library provides algorithms and
+containers optimal for diﬀerent data patterns.
+    </p>
+
+	<h3>Problem description</h3>
+
+	<p>In this example we analyze the sub-case used in TPC-H transaction benchmark (http://
+www.tpc.org/tpc_documents_current_versions/pdf/tpc-h_v2.17.2.pdf), join between LINEITEM
+and ORDERS tables.
+	</p>
+
+                            <span class="image fit"><img src="images/bench/tpc-h-scheme.png" alt="TPC-H Star" /></span>
+       <p align="center"><strong>Star scheme used for TPC-H benchmarking</strong></p>
+
+
+
+	<p>The scheme above was taken from the TPC-H benchmark specification. The focus of this case
+study is relational join between tables with high cardinality, ORDERs to LINEITEM. ORDER table in the TPC-H database 
+naturally represents orders, placed in the trading system, LINEITEMs - show us items in the orders. 
+One order can contain multiple items (one-to-many) relationship.</p>
+
+                            <p>This is high cardinality case, where each order actually refers to a relatively small number of
+items, LINEITEM.ORDERKEY column contains values that are very uncommon or unique (one item per order).</p>
+
+                            <p><i>Why is high cardinality case important?</i></p>
+
+                            <p>This case is very important because this is a common scenario, where conventional bit vectors
+may be ineﬃcient as a tool for in-memory indexing. Conventional bit vectors are excellent for low cardinality indexes, 
+where relatively low variance of values are present in one indexed column. Sparse or compressed bit vectors and 
+inverted lists work fine for medium cardinality cases. High cardinality cases present a problem, bit vectors 
+become very sparse and noticeably ineﬃcient.
+</p>
+
+                            <h3>Test case: scale and statistical properties of an index</h3>
+
+                            <p>In this test simulation we generate an index with the following statistical                              properties:</p>
+                            <ul>
+                                <li>use 1 million elements to simulate ORDERs to ITEMs index.</li>
+                                <li>assume that ITEMs ids can go up as high as 2 million, (this parameter does not look very important)</li>
+                                <li>one order contains 5 items</li>
+                                <li>items are not always shipped sequentially, in other words, assignment of the item ids is fairly random</li>
+                            </ul>
+
+                            <h3>LINEITEM key generation</h3>
+
+                            <p>Line item keys, 5 for each vector are generated using pseudo random algorithm where a
+                            certain part (like 20% cases) is assigned sequentially from a random location within [0..2M] range. 
+                            This simulates cases, where all items are shipped immediately, because they are in stock (assumption).
+                            </p>
+
+                            <p>Another 20% are assigned almost sequentially one after another with some random increment
+                             of [0..10] within the same [0..2M] range of possible ids. This distribution simulates “almost ready items” 
+                            (or some technical variance in the id assignment generator).
+                            </p>
+
+                            <p>Everything else is assigned randomly, assuming that the items are shipped from diﬀerent 
+                            locations and/or at diﬀerent times.
+                            </p>
+
+                            <p>This pattern is very challenging and unfavorable for bit vector indexing scheme.
+                            This should negatively impact performance and result in memory issues, which we want to understand better.
+                            </p>
+
+                            <h3>Competing implementations</h3>
+
+                            <h4>case 1: a collection of bit vectors</h4>
+
+                            <p>Variant 1 uses an STL map<> of bit vectors using BitMagic library (bm::bvector<> container).
+                               Each bm::bvector<> is constructed to possibly use less memory, with bm::BM_GAP on the fly
+                               compression mode, custom gap lengths table { 8, 32, 128, 512 } and maximum size of 2M to
+                               explicitly declare the allowed dynamic range and limit some internal structures.
+                            </p>
+
+                            <p>Memory consumption is calculated for each bvector<> instance. Memory consumption of STL
+                               map<> is not taken into account.
+                            </p>
+
+                            <h4>case 2: a collection of serialized bit vectors</h4>
+                            <p>
+                                BitMagic library oﬀers bit vector serialization, which saves sparse bit vector into continuous
+                                memory BLOB, using various compaction tricks. This mode cannot be used to access random
+                                bits in the vector, but BitMagic oﬀers streaming logical operations on serialized BLOBs. So
+                                serialized BLOBs are perfectly suitable for query acceleration. Implementation details here are
+                                that we would use an STL <code>vector<unsigned char></code> for BLOB memory manager. It is possible to
+                                do it in C-style, or create a custom serialized implementation, but let’s use a std::vector<> for
+                                the clarity of this case study.
+                            </p>
+
+                            <h4>case 3: a collection of arrays of integers</h4>
+
+                            <p>This is a a classic uncompressed inverted list, all generated values are stored as a
+                             <code>std::vector<unsigned></code>, the properties of high cardinality and random distribution makes this
+                              scheme a suitable candidate for storing this relationship. BitMagic library again oﬀers a full set
+                              of logical streaming operations for array representation.
+                            </p>
+
+                            <h4>case 4: bit-transposed sparse vectors with access index</h4>
+
+                            <p>This variant is a bit more involved technically, but the latest versions of BitMagic library provide the container and tools to help.</p>
+
+                            <h3>What is bit transposition?</h3>
+
+                            <p>Bit transposition is an equivalent transformation of our source integer array into bit vector plains, where each plane represents 
+                            corresponding bit in each element of the input array.</p>
+
+                            <span class="image fit"><img src="images/bench/bit-transpose0.png" alt="Bitwise Transpose" /></span>
+                            <p align="center"><strong>Figure 3. Bit Transposition of an inverted list</strong></p>
+
+                            <p>Noteworthy implementation detail: </p>                             <ul>
+                                <li>we initially jump from case 3 (array representation)</li>                                  <li> the array is recalculated using delta-coding, very simple transformation actually to keep only delta values between 
+                            consecutive sorted array elements. Embarassingly simple formula coming: <code>a[i] = a[i] − a[i − 1]</code>. 
+                            This transformation is designed to reduce bitness/dynamic range of array elements.</li>
+                                <li>arrays are stored in memory using BitMagic bm::sparse_vector<> container, which provides
+                                    transparent bit transposed storage. Size and oﬀsets are stored separately. To make bit
+                                    patterns more regular we actually sort collection of vectors by some ad-hoc measure of
+                                    entropy to bring vectors with low delta values first, it somewhat improves the compression in the bit-plains.</li>
+                            </ul>
+
+                            <h3>Memory consumption</h3>
+
+                            <p>After running our benchmark program we get memory consumption numbers.</p>
+
+                            <pre><code>
+bm::bvector<> memory footprint = 2189711888 (2088MB)
+bm::bvector<> BLOB memory footprint = 29773037 (28MB)
+std::vector<unsigned> memory footprint = 47359288 (45MB)
+bm::sparse_vector<> memory footprint = 9673776 (9MB)
+</code></pre>
+
+                            <span class="image fit"><img src="images/bench/bv-sv-memory-chart.png" alt="Memory consumption comparison" /></span>
+                            <p align="center"><strong>Figure 4. Memory consumption comparison.</strong></p>
+
+                            <p>Memory consumption numbers are very indicative. <code>bm::bvector<></code> consumes 2GBs of memory due to various overheads related to random access, 
+                            and block based allocation. This maybe too much for the sparse-random case and storing millions of objects in memory.</p>
+
+                            <p>BitMagic serialized case shows excellent memory footprint of just 28MB.</p>
+
+                            <p>Plain uncompressed storage of ids in <code>std::vector<></code> - 45MB. Good result as well.</p>
+
+                            <p><code>bm::sparse_vector<></code> with all transposition compression and sorting tricks applied gives us 9M and it is a champ in memory consumption, 
+                            being 5 times better than std::vector<>. While this method claims a tentative victory here we must admit that it may actually use the fact of a
+                            limited dynamic range that order items generated for this case. Our diagnostics shows that the
+                            sparse vector used 20 bits to store this dynamic range, plus a few plains were compressed
+                            using properties of <code>bm::bvector<></code>. This may not hold true for all cases and all databases.</p>
+
+                            <p>The fact to take home here is that when using BitMagic Library as a library of bit vectors we do
+                             not have to always use bm::bvector<> container. Having a hammer is good, but not all problems are nails. 
+                            Good understanding of database cardinality helps to choose the correct strategy.
+                            </p>
+
+                            <h3>Performance benchmark description</h3>
+
+                            <p>For all variants of storage we created benchmarks to perform simulated requests used for
+                               INNER JOIN operations. Our simulation boils down to joining all vectors together (logical OR),
+                               then picking 250 vectors randomly, OR-ing all of them (simulated BETWEEN or other range query), 
+                            then perform AND between set 1 and set 2. The result vector is traversed to extract first 200 elements (TPC-H benchmark wants 100).</p>
+                            
+                            <p>This is not full TPC-H analytical transaction mix, but it illustrates one of the complex aspects
+                               of the (pre-calculated) join fairly well.</p>
+
+                            <p>Our test program repeats benchmark algorithm 1000 times and calculates number of transactions per second 
+                            (higher is better).</p>
+
+                            <p>All implementations are done using BitMagic streaming set algorithms.</p>
+
+                            <p>The test is NOT multi-threaded, by design it uses one CPU core.</p>
+
+                            <h4>System description</h4>
+                            <pre>
+                                System description
+INTEL(R) CORE(TM) I5-6500 CPU @ 3.20GHZ 14nm, 6MB Cache, TDP 65W, max turbo frequency 3.6GHZ
+
+The Core i5-6500 is an intermediate model of the Intel sixth-generation (Skylake) Core i5 family.
+
+We ran this test on a few other systems but this mid-range CPU looks representative for
+benchmarking. 
+
+Compiler settings (GCC): -march=core2 -O2 -g0
+
+g++ --version
+
+Configured with: --prefix=/Applications/Xcode.app/Contents/Developer/usr --with-gxx-includedir=/usr/include/c++/4.2.1
+
+Apple LLVM version 9.0.0 (clang-900.0.38)
+
+Target: x86_64-apple-darwin16.7.0
+
+Thread model: posix
+</pre>
+
+                            <h3>Performance benchmark results</h3>
+<pre><code>
+1. bm::bvector<> index; 837 ops/sec
+2. serialized bvector; 1610 ops/sec
+3. std::vector<unsigned> ; 3984 ops/sec
+4. bm::sparse_vector<unsigned> ; 817 ops/sec
+</code></pre>
+
+                            <span class="image fit"><img src="images/bench/tpc-h-join-1.png" alt="TPC-H star scheme join becnchmark" /></span>
+                            <p align="center"><strong>Figure 5. Benchmark run 1.</strong></p>
+
+                            <p>The results here may come out as a little bit of surprise, because the plain bvector<> variant is
+actually not the fastest one. Bear in mind though that the extreme memory consumption
+requires lots of bandwidth and cache flushes, making this indexing method not just a memory
+hog, but a bandwidth hog as well. Operations on serialized bvector<> use streamlined memory
+model and perform better as a result. <code>std::vector<></code> storage model uses combination of
+<code>bm::combine_or()</code> algorithm and <code>bm::bvector<></code> operations and shows the best performance.
+<code>bm::sparse_vector<></code> is the slowest, but quite on par with the benchmark1. The performance
+here would be subject of fluctuations, but in our benchmark it seems to be using high CPU L3
+cache locality and working better than expected despite the high level of data compression.</p>
+
+                <h3>CPU SIMD vectorization: AVX2</h3>
+
+                            <span class="image fit"><img src="images/bench/tpc-h-join-1-avx2.png" alt="TPC-H star scheme join using AVX2" /></span>
+                            <p align="center"><strong>Figure 6. JOIN operation using AVX2 SIMD.</strong></p>
+
+                            <p>For AVX2 tests we used -march=native -mavx2 settings. Our AVX2 optimizations have little
+                               performance impact. BitMagic 3.9.1+ version uses SIMD instructions to do logical operations
+                               on blocks of bits and to calculate the population count. Based on the chosen scenario the bulk
+                               of the algorithms uses variants of compressed super sparse blocks and boils down to sorting
+                               and comparing various int arrays.</p>
+
+                            <p>More work to be done to fully utilize the AVX2 potential.</p>
+
+                            <h3>Normalized results (join operations per second per MB)</h3>
+
+                            <span class="image fit"><img src="images/bench/tpc-h-join-opsmb.png" alt="TPC-H star scheme join performance per MB" /></span>
+                            <p align="center"><strong>Figure 7. JOIN operations per MB of memory consumtion.</strong></p>
+
+                            <h3>Conclusions</h3>
+
+                            <ol>
+                                <ul>
+                                    Real life search and RDBMS systems should use statistical properties of sets/vectors to
+                                    segregate storage between bit-vectors, arrays and compressed storages.
+                                </ul>
+                                <ul>
+                                    Embarrassingly sparse vectors can and should use compressed in-memory storage
+                                    techniques, the compression in many cases actually improves performance.
+                                </ul>
+                                <ul>
+                                    BitMagic Library provides algorithms and tools to work eﬃciently with various array
+                                    implementations, including C-style arrays, STL. It is important to experiment with the
+                                    runtime compression options of bvector<> container.
+                                </ul>
+                                <ul>
+                                    Many systems may not need random access vectors, and should store serialized and
+                                    compressed BLOBs and use streaming model of oprtations. This is an important design
+                                    decision. Counterintuitively, streaming compressed mode may oﬀer better performance
+                                    comparing to fully uncompressed random access.
+                                </ul>
+                            </ol>
+
+                            <h4>Source Code</h4>
+                            <p>
+                                <a href="http://bitmagic.io/doxygen/html/xsample01_8cpp-example.html">http://bitmagic.io/doxygen/html/xsample01_8cpp-example.html</a>
+                                <br />OR <br />
+                                <a href="https://github.com/tlk00/BitMagic/blob/master/samples/xsample01/xsample01.cpp">https://github.com/tlk00/BitMagic/blob/master/samples/xsample01/xsample01.cpp</a>
+                            </p>
+
+                            <h3>Acknowledgements</h3>
+                            <p>The author thanks Michael Kholodov (NCBI) and Andrey Yazhuk (Elsevier) for ideas, reviews and discussions.</p>
+
+
+</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

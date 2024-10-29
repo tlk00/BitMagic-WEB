@@ -1,0 +1,279 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic C++ Getting Started</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+
+							<header>
+								<h1>BitMagic C++ Library: Getting Started</h1>
+								<h2>Build model</h2>
+							</header>
+
+							<p>BitMagic C++ Library uses simple build model - it is all headers.
+                            </p>
+
+                            <p>
+                            All library sources are in the src directory. You can copy all files to your project, make include path reachable
+                            to your compiler and you are ready to go.
+                            </p>
+                            
+                            <p>
+                            However if you want to use our makefiles you need to follow the next simple instructions:
+                            <p>
+                            
+                            <h3>Unix/Linux:</h3>
+                            
+                            <p>
+                            - Apply environment variables by runing bmenv.sh :
+                            <code>$ . bmenv.sh</code>
+                            </p>
+
+                            <p>
+                            - use GNU make (gmake) to build installation.
+
+
+                            <code>$gmake rebuild</code>
+
+                            or (DEBUG version)
+                             
+                            <code>$gmake DEBUG=YES rebuild</code>
+                            </p>
+                            <p>
+                            The default compiler on Unix and CygWin is g++.
+                            If you want to change the default you can do that in makefile.in
+                            (should be pretty easy to do). We regularly test this library with GCC/G++, XCODE, Intel C++, MSVC.
+                            </p>
+                            
+                            <h2>Basic usage</h2>
+                            
+                            <p>BitMagic uses STL fiendly concept of containers, iterators and algorithms to implement inverted lists and
+                            bit-transposed sparse vectors.
+                            </p>
+                            
+                            <h3>Sample 1: bm::bvector&lt&gt</h3>
+                            <p>
+                            This example shows how to start with <code>bm::bvector&lt&gt</code> - container and how to iterate over the list
+                            of values with <code>bm::bvector&lt&gt::enumerator iterator</code>
+                            
+                            <pre><code>
+                            
+#include &ltiostream&gt
+#include &ltalgorithm&gt
+#include "bm.h"
+
+using namespace std;
+
+void Print(unsigned n)
+{
+    cout << n << endl;;
+}
+
+int main(void)
+{
+    bm::bvector<>   bv;    
+
+    bv[10] = true;
+    bv[100] = true;
+    bv[10000] = true;
+
+    bm::bvector<>::enumerator en = bv.first();
+    bm::bvector<>::enumerator en_end = bv.end();
+
+    while (en < en_end)
+    {
+        cout << *en << endl;
+        ++en;  // pre-increment - fastest way to increment enumerator
+    }
+
+    en = bv.first();
+
+    // This is not the fastest way to do the job, because for_each 
+    // often will try to calculate difference between iterators,
+    // which is expensive for enumerators.
+    // But it can be useful for some STL loyal applications. 
+
+    std::for_each(en, en_end, Print);
+
+    return 0;
+}
+
+                            </code></pre>
+                            </p>
+                            
+                            <h4>STL compatibility note</h4>
+                            
+                            <p>STL is designed around algorithms and we employ <code>std::for_each</code>.
+                            There is a problem though. Enumerator is not a truly random access iterator.
+                            Some STL algorithms can try to calculate difference between iterators.
+                            Sometimes it is not obvious if algorithm needs <b>"-"</b> or not.
+                            Often it is done as a part of loop unrolling for optimization.
+                            For enumerator difference is very expensive and "optimization" like this we can end up with performance
+                            degradation. Be extra careful when you use enumerator with the standard algorithms.
+                            </p>
+
+                            
+                            <h3>Sample 2. Search for next bit</h3>
+                            
+<p>BM bvector template class provides <code>get_first()</code> and <code>get_next()</code> functions.</p>
+
+<pre><code>
+    bm::bvector<>   bv;  
+
+    bv.set_bit(10);
+    bv.set_bit(100);
+    bv.set_bit(1000000);
+
+    unsigned value = bv.get_first();
+    do
+    {
+        cout << value << endl;
+        value = bv.get_next(value);
+        if (!value)
+        {
+            break;
+        }
+    } while(1);
+
+</code></pre>
+
+                            <p>Possible advantage of <code>get_next()</code> is that it can start its scan forward from any
+                            position in bvector.
+                            </p>
+                            
+                            
+
+                            <h3>Sample 3: bm::sparse_vector&lt&gt</h3>
+                            
+                            <p>
+                            Next example illustrates use of bit-transposed array, which offers on the fly 
+                            compression of integer values. It is based on <code>bm::bvector&lt&gt</code>
+                            <pre><code>
+
+#include &ltiostream&gt
+#include "bmsparsevec.h"
+
+using namespace std;
+
+int main(void)
+{
+    bm::sparse_vector<unsigned, bm::bvector<> > sv1;
+    
+    unsigned arr[3] = {1,2,3};
+    sv1.import(arr, 3); // import from a C-style array (fastest way to populate)
+
+    // optimize memory allocation of sparse vector
+    {
+        BM_DECLARE_TEMP_BLOCK(tb)
+        sv1.optimize(tb);
+    }
+    
+    cout << "sv1.size() = " << sv1.size() << endl;
+    cout << "sv[]:";
+    
+    // print the vector elements using direct access operator
+    for (unsigned i = 0; i < sv1.size(); ++i)
+    {
+        cout << sv1.at(i) << ",";
+    }
+    cout << endl;
+    
+
+    return 0;
+}
+</code></pre>
+                            </p>
+                            
+                            
+                        <h2>See Also</h2>
+                        <ol>
+                            <li><a href="apis.html" ><span class="label">BitMagic APIs Reference</span></a></li>
+                            <li><a href="design.html" ><span class="label">BitMagic Design concepts</span></a></li>
+                            <li><a href="doxygen/html/examples.html" ><span class="label">Doxygen samples</span></a></li>
+                        </ol>
+
+
+
+
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

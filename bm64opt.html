@@ -1,0 +1,235 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>64-bit safety and optimization</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>64-bit optimization</h1>
+                            <p>Anatoliy Kuznetsov. 2002.</p>
+                            
+    <h3>Introduction</h3>
+	
+	<p> Multiple CPUs and operating systems on the market natively
+  supporting 64-bit operations and adressing. This mode is especially
+  beneficial for scientific and engineering applications dealing with big
+  amounts of data. Probably the major advantage of the 64-bit mode is that huge
+  address space is becoming available. Program can allocate twice more memory;
+  easily maintain large database files, etc. There are also certain performance
+  optimization advantages. Most of the articles on 64-bits computing concentrate
+  on ability to address more than 4GB of memory. Current edition of BitMagic
+  library does not address memory issue, but rather focuses of performance
+  aspects. The ability of 64-bit CPUs to perform bitwise operations 64 bits at
+  a time can and must be exploited.   
+	</p>
+    
+    <p>Another advantage of 64-bit mode is availability if extra explicitly available (for the compiler) HW registers.
+    In general, 64-bit compiled code has a better chance running faster, because compiler has freedom to place local variables
+    into registers.
+    </p>
+
+	<h3>64-bit Safety</h3>
+
+	<p>Lets review the main C coding malpractices when we are coding for 32-bit system
+    with hypothetical 64-bit CPU in mind.
+	<ol>
+		<li>Reliance on the fact that size of pointer is equal to size of int. For 64-bit system sizeof(void*) == 8 and sizeof(int) usually remains 4. Ignoring this fact can result in an incorrect assignment and crash.</li>
+		<li>Reliance on a particular byte order in the machine word. This is especially important for bit set implementation, since bitsets can be character, integer or long integer based.</li>
+		<li>Using type long and presuming that it always has the same size as int. Direct assignment of this types cases value truncation and can lead to a rear, hardly detectable problems.</li>
+		<li>Alignment of stack variables. Stack variable in some cases can have adress not aligned on 8 byte boundary. If you type cast such variable to 64-bit variable you can be in trouble on some systems. But if you place 64-bit variable (long or double) on stack it is guaranteed to be aligned. Heap allocated memory is aligned too.
+		</li>
+		<li>Different alignment rules in structures and classes. For 64-bit architectures structure members are often aligned on 64-bit boundaries. It leads to problems in sharing binary data through IPC, network or disk. Packing data structures to save resources can cause problems if alignment is not taken into consideration.</li>
+		<li>Pointer arithmetic when 64-bit pointer is incremented as 32-bit pointer and vice versa. 64-bit pointer is incremented by 8 bytes, 32-bit pointer - 4 bytes.</li>
+		<li>In absence of function prototype return value is considered to be int, which can cause value truncation.</li>
+	</ol>
+	</p>
+
+	<h3>Get the most work each clock cycle</h3>
+
+	<p>The key point to the high performance 64-bit C programming is wide integer
+  and FPU registers. Registers by definition are the expensive type of computer
+  memory. In a 64-bit CPU registers are 8 bytes wide. Often it accompanied with
+  a corresponding 128 or 256 bits wide memory bus. Our target is effective
+  utilization of these resources.
+	</p>
+
+	<p>Lets take a short fragment of C code. Here we perform a bit AND operation on a block of memory, representing an integer-based bitset block.
+	<pre><code>
+{
+    int   a1[2048];
+    int   a2[2048];
+    int   a3[2048];
+
+    for (int i = 0; i < 2048; ++i)
+    {
+         a3[i] = a1[i] & a2[i];
+    }
+}
+	</code></pre>
+	</p>
+
+	<p>Now we can optimize this code for 64-bit mode. (The code fragment here relies on the <b>long long</b> C type which is not provided by some compilers.) 
+	<pre><code>
+{
+    long long  a1[1024];
+    long long  a2[1024];
+    long long  a3[1024];
+
+    for (int i = 0; i < 1024; ++i)
+    {
+         a3[i] = a1[i] & a2[i];
+    }
+}
+	</code></pre>
+	</p>
+
+	<p>
+As you can see, we did not change the total size of the bit set block. But
+  now it takes twice fewer operations to AND vectors. It reduces the loop
+  overhead and equivalent to the loop unrolling with coefficient 2. The
+  disadvantage of this code is its pure 64-bitness. Being compiled on 32-bit
+  system it will give as a wrong result because of the different long size.	
+	</p>	
+
+
+	<p>Further modification can probably end up with something like this.
+	<pre><code>
+{
+    int   a1[2048];
+    int   a2[2048];
+    int   a3[2048];
+
+    long long* pa1 = (long long*) a1;
+    long long* pa2 = (long long*) a2;
+    long long* pa3 = (long long*) a3;
+
+    for (int i = 0; i < sizeof(a1) / sizeof(long long); ++i)
+    {
+         pa3[i] = pa1[i] & pa2[i];
+    }
+}
+	</code></pre>
+	This code is 32 and 64-bit safe and uses wide registers to do the job on 64-bit CPUs. 
+When type casting like this we should remember about pointers alignment. If we blindly type cast int pointers to 64-bit long pointers it might happen that address will not be 8 bytes aligned. On some architectures it will  cause a BUS error and crash. 
+This effect was noticed on Sun Solaris. It is quite possible that 32-bit int variable, placed on stack will have 4 byte aligned adress and the code above will fail.
+	<br>
+	</p>
+
+	<h3>Bits counting</h3>
+
+	<p>One of the most important operations in bit set arithmetic is counting
+  number of 1 bits (population count). BitMagic uses integer-based bitvectors. It means that each
+  bitvector uses arrays of integers as a minimal building block for bit sets.
+  The default method used in BitMagic splits each integer into 4 characters and looks
+  up a table containing bits count. This linear approach can be improved by
+  using 16-bit wide table, but at the cost of a much larger table. Larger table
+  will most probably introduce some additional memory fetch operations,
+  interfere with on CPU cache and finally will fail to deliver a significant
+  performance boost.
+	</p>
+
+	<pre><code>
+int count(long long b)
+{
+     b = (b & 0x5555555555555555LU) + (b >> 1 & 0x5555555555555555LU);
+     b = (b & 0x3333333333333333LU) + (b >> 2 & 0x3333333333333333LU);
+     b = b + (b >> 4) & 0x0F0F0F0F0F0F0F0FLU;
+     b = b + (b >> 8);
+     b = b + (b >> 16);
+     b = b + (b >> 32) & 0x0000007F;
+
+     return (int) b;
+}
+	</code></pre>
+
+	<p>This code was inspired by "Exploiting 64-Bit parallelism" article by Ron Gutman in Dr.Dobb's Journal September 2000. Tests showed that this code can leave table counting method far behind. 
+	</p>
+	
+	<h3>Implementation</h3>
+ 
+	<p>Current edition of BitMagic library optimized to use 64-bit arithmetic
+  to improve performance.</p>
+
+
+
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

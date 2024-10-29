@@ -1,0 +1,121 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 3.13.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+
+							<header>
+								<h1>Version 3.13.0</h1>
+                                <span class="date">Aug 10, 2018</span>
+							</header>
+                            
+                            <p></p>
+                            <h2>Release Notes</h2>
+                            
+                            <ol>
+                                <li>Implemented a new utility class <a href="doxygen/html/classbm_1_1aggregator.html">bm::aggregator&lt;&gt;</a> for fast logic (AND, OR, AND-SUB) operations on 
+                                groups of vectors. Aggregator uses cache blocking techniques and other optimizations to
+                                work faster than pairwise operations.<a href="aggregator.html">Tech.notes.</a></li>
+
+                                <li>Added new example to illustrate use of new aggregator. 
+                                <a href="doxygen/html/sample16_8cpp-example.html">sample16.cpp</a>
+                                </li>
+
+                                <li>Sparse vector search utility class (scanner) for unordered sets bm::sparse_vector&lt;&gt;
+                                    <a href="doxygen/html/classbm_1_1sparse__vector__scanner.html">bm::sparse_vector_scanner&lt;&gt;</a>
+                                    improved its performance 2-3x times (via use of aggregator).
+                                </li>
+
+                                <li>Documentation update on unordered set search, new benchmark results. 
+                                <a href="sparse-vector-search.html">Read more..</a>
+                                </li>
+                            </ol>
+
+                            <p><span class="image left"><img src="images/bench/sparse_scanner-bench2.png" alt="sparse scan 2" /></span>
+                            </p>
+
+                            <br />
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic3.13.0/" class="button">Download v 3.13.0</a></p>
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,314 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Elias Gamma compression</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <h1>Elias Gamma encoding</h1>
+                            <p>Anatoliy Kuznetsov. 2009. UPDATE: Jan.2020</p>
+
+                            <h3>Introduction</h3>
+
+                            <p>
+                                BitMagic Library v.3.6.0 implements a variant of Elias Gamma Encoding as part of bit-vector serialization.
+                                Wikipedia has an article on this encoding: <A href="http://en.wikipedia.org/wiki/Elias_gamma_coding">http://en.wikipedia.org/wiki/Elias_gamma_coding</A>
+                            </p>
+
+                            <p>
+                                Older versions of BM library used D-Gap compression which is a variant of run length encoding.
+                                Or used plain lists of integers to encode very sparse sets. All this compression methods used word
+                                aligned algorithms and rely on presence of long runs of identical bits.
+                            </p>
+
+                            <h3>D-Gap encoding</h3>
+
+                            <p>
+                                In certain cases, bit blocks will frequently have a non-random bit distribution pattern.
+                                Here's an example:
+
+                                <pre>
+	0001000111001111
+	</pre>
+
+                                Patterns such as these can be represented in different ways.  One of the most popular is a list of integers, each representing 1 bit.  For example
+
+                                <pre>
+	{ 3, 7, 8, 9, 12, 13, 14, 15, 16 }
+	</pre>
+
+                                This is a list of indexes of bits stored as an ascending sequence of integers.
+                            </p>
+
+                            <p>
+                                Another common way of representing ascending sequences is by using the method of D-Gaps, the differences between elements of the list.  Incidentally, this variant of D-Gap compression was used in the BitMagic library.
+                            </p>
+
+                            <h3>What is D-Gap Compression?</h3>
+                            <p>
+                                In D-Gap compression, the very first integer in the sequence is always 1 or 0, and it works as a flag indicating the start bit.  In the example above the first bit is 0.  The integers following the flag are the lengths of the consecutive blocks of equal bits.  The sum of all elements of the sequence without the starting flag value will give us the total length of the block.
+                                Essentially this coding model can be treated as a specialized variant of Run Length Encoding (RLE).
+                                The D-Gap form of the previous example is:
+
+                                <pre>
+	{[0], 3, 1, 3, 3, 2, 4}
+	</pre>
+
+                                This translates to "Three zeroes, one 'one', three zeros, three ones, two zeroes, and four ones", or
+
+                                <pre>
+	000 1 000 111 00 1111
+	</pre>
+                            </p>
+
+                            <p>
+                                Older versions of BM library used D-Gap compression which is a variant of run length encoding
+                                or used plain lists of integers to encode very sparse sets.
+                                All this compression methods used word aligned algorithms and rely on presence of
+                                long runs of identical bits.
+                            </p>
+
+                            <p>
+                                A lot of practical tests demonstrated that BM based search systems are bandwidth limited.
+                                It means that CPU is starved, waiting for memory operations or disk retrieval.
+                                Disk retrieval is particularly important because IO and network subsystems never
+                                followed terms of Moore Law. Non-Word-Aligned encoding seems to a good answer to this problem.
+                            </p>
+
+                            <h3>Elias Gamma Encoding</h3>
+
+                            <p>
+                                Elias Gamma encoding developed by Peter Elias postulates bit-encoding of positive
+                                (non-zero) integers. Positive non-zero integers are essentially the native format for BM library to store sparse bit-vectors or inverted lists
+                                (basic building blocks of efficient bitmap indexes).
+                            </p>
+
+                            <p>
+                                Fragment of Gamma encoding table:
+                            </p>
+
+<pre>
+1 = 20 + 0 = 1                 
+2 = 21 + 0 = 010                
+3 = 21 + 1 = 011                
+4 = 22 + 0 = 00100 
+....
+</pre>
+
+<pre>
+Here is our sequence of ints in the form on 16-bit native integers:
+{3, 1, 3, 3, 2, 4}
+{0000000000000011, 0000000000000001, 0000000000000011, 0000000000000011, 0000000000000010, 0000000000000100 }
+
+Gamma code:
+{011, 1, 011, 011, 010, 00100 }
+</pre>
+
+                            <h3>Advantages</h3>
+
+                            <p>
+                                <li>
+                                    Simple implementation, requires no compression dictionary.
+                                    It is easy to compress just a few ints without constructing and storing a dictionary.
+                                    BM library works with independent blocks of bits (potentially computed in parallel).
+                                </li>
+                                <li>
+                                    Implied probability favors small integers â€“ good for BM library since it
+                                    fragments bit-vector into blocks of 65K bits. Methods allows some blocks to be encoded,
+                                    and some to remain in GAP or raw bit-block format (if statistical distribution of bits suddenly changes).
+                                </li>
+                                <li>
+                                    Compact implementation reduces code bloat, fits into a C++ template library paradigm.
+                                </li>
+                            </p>
+
+                            <h3>Disadvantages</h3>
+                            <p>
+                                <li>
+                                    True adaptive statistical methods (like arithmetic compression) can(should?)
+                                    give better compression ratio.
+                                </li>
+                                <li>
+                                    Encoding and decoding method is sequential, it seems hard to implement a
+                                    parallel encoder/decoder using SIMD, SSE or GP-GPU.
+                                    (BM blocks can potentially be decoded in parallel so maybe there is a way to use parallel methods for this).
+                                </li>
+                                <li>
+                                    Non-word-aligned scheme requires a lot of bit-shifting and masking, can be slow
+                                    on some systems.
+                                </li>
+                            </p>
+
+                            <h3>Usage example</h3>
+
+                            <pre><code>
+        #include "bm.h"
+        #include "bmserial.h"
+
+        unsigned char* serialize_bvector(bm::serializer<bm::bvector<> >& bvs,
+                                         bm::bvector<>& bv)
+        {
+            // It is reccomended to optimize vector before serialization.
+            bv.optimize();
+
+            bm::bvector<>::statistics st;
+            bv.calc_stat(&st);
+
+            // Allocate serialization buffer.
+            unsigned char*  buf = new unsigned char[st.max_serialize_mem];
+
+            // Serialization to memory.
+            unsigned len = bvs.serialize(bv, buf, 0);
+
+            cout << "Serialized size:" << len << endl << endl;
+            return buf;
+        }
+
+        int main(void)
+        {
+            bm::bvector<>   bv1;
+            bm::bvector<>   bv2;
+
+            .... Fill bit-vectors with values ....
+
+            // Prepare a serializer class
+            //  for best performance it is best to create serilizer once and reuse it
+            //  (saves a lot of memory allocations)
+            //
+            bm::serializer<bm::bvector<> > bvs;
+
+            // next settings provide lowest serilized size
+            bvs.byte_order_serialization(false);
+            bvs.gap_length_serialization(false);
+            bvs.set_compression_level(4); // Use Gamma encoding
+
+            unsigned char* buf1 = serialize_bvector(bvs, bv1);
+            unsigned char* buf2 = serialize_bvector(bvs, bv2);
+
+            // Serialized bvectors (buf1 and buf2) now ready to be
+            // saved to a database, file or send over a network.
+
+            // ...
+
+            // Deserialization.
+
+            bm::bvector<>  bv3;
+
+            // As a result of desrialization bv3 will contain all bits from
+            // bv1 and bv3:
+            //   bv3 = bv1 OR bv2
+
+            bm::deserialize(bv3, buf1);
+            bm::deserialize(bv3, buf2);
+
+            delete [] buf1;
+            delete [] buf2;
+
+            return 0;
+        }
+
+        </code></pre>
+
+                            <h2>UPDATE for v.5.0.0 and up</h2>
+
+                            <p>
+                                BitMagic v.5.0.0 implements a better compressed serialization of bit-vectors using
+                                Binary Interpolated Encoding (Center Minimal).
+                                Tested on Gov2 collection it gives approximately 25% improvement in disk footprint comparing to
+                                previous version which was using Delta Elias Gamma encoder.
+                                New serialization is backward compatible, BitMagic supports protocol evolution and
+                                will read old BLOBs. New serialization default is level 5.
+                                If you like to keep using Elias Gamma - use level 4.
+                            </p>
+
+                            <p>
+                                Figure below illustrates new compression numbers using two Gov2 inverted list benchmark sets, sorted and unsorted.
+                            </p>
+                            <span class="image center"><img src="images/bench/bm5-gov2.png" width="512" alt="BitMagic 5.0.0 serialization efficiency" /></span>
+
+                            <p><a href="bm5-bic.html">More on Binary Interpolative Coding</a></p>
+                            <p>
+                                While working on version 5 we used benchmarking sets provided by Daniel Lemire and Leonid Boytsov.
+                            </p>
+
+                        </section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

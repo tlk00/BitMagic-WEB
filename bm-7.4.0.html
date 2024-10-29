@@ -1,0 +1,136 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.4.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.4.0</h1>
+                        <span class="date">July 4, 2021</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <p>BitMagic v.7.4.0 </p>
+
+                    <ol>
+                        <li>
+                            <p>
+                                Continued effort to provide better version for WebAssembly, first WASM SIMD build is available using:
+                                <code>#define BMWASMSIMDOPT</code> (or define via makefile).
+                                <p>
+                                Example emcc command like may look like:
+                                </p>
+                                <code>emcc -std=c++11 -s ALLOW_MEMORY_GROWTH=1 -O2 -msse4.2 -msimd128 -D BMWASMSIMDOPT -s WASM=1 -s DISABLE_EXCEPTION_CATCHING=0  -fno-rtti</code>
+                            </p>
+                            <p>
+                                Please note that WebAssembly SIMD is implemented as cross-compilation tweak for SSE4.2 (thus needs <code>-msse4.4</code> flag).
+                            </p>
+                            <p>WebAssembly SIMD is still an experimental feature for all browsers but Google Chrome.
+                            Initial performance observations sometimes show faster than native(without SIMD) speed for 
+                            optimized algorithms.
+                            </p>
+                        </li>
+
+                        <li>
+                            Implemented 3-valued logic operations (INVERT, AND, OR) following the Kleene truth tables.
+                            <a href="https://en.wikipedia.org/wiki/Three-valued_logic">Wiki</a>
+                            <br />
+                            <a href="https://github.com/tlk00/BitMagic/tree/master/samples/bv3vlogic">Usage example on GitHub</a>
+                        </li>
+
+                        <li>
+                            Fixed bugs in parallel algorithms (race condition).
+                        </li>
+
+                        <p>
+                            <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.4.0/" class="button">Download v7.4.0 (Sourceforge)</a>
+                            <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.4.0" class="button">GitHub</a>
+                        </p>
+
+
+</section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

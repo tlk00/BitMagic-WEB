@@ -1,0 +1,193 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 7.12.3</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 7.12.3</h1>
+                        <span class="date">July 14, 2022</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            <p>
+                                Fixed bugs related to handling of immutable bit-vectors</code>
+                            </p>
+                        </li>
+                        <li>
+                            <p>Fixed bug in Rank-Select index assisted <code>bvector&lt;&gt;::count_to()</code> </p>
+                        </li>
+                        <li>
+                            Implemented sparse vector read-only deserialization mode:
+                            <code>
+                            bm::sparse_vector_deserializer&lt;&gt;::set_finalization(bm::finalization::READONLY);
+                            </code>
+                            <a href="https://github.com/tlk00/BitMagic/tree/master/samples/svsample02">svsample02</a>
+                        </li>
+
+                        <li>
+                            <p>
+                                Optimizations: for <code>bvector&lt;&gt;::test( )</code> membership testing (and changing)
+                                for GAP compressed blocks. BM implementation uses binary search (ONlogN) for this operation 
+                                with SIMD optimizations (hybrid binary search). The algorithms around this problem were 
+                                reviewed to minimize number of comparisons, better use L1 cache and improve speed.
+                                Performance gain of 10-20% measured on synthetic tests.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                Optimizations: <code>bm::aggregator&lt;&gt;</code>SIMD and general purpose optimizations
+                                of aggregate AND-SUB operations. Group AND-SUB operation is at the core of succinct vector
+                                searches, inspired by Bloom filters but uses "data as an index approach"
+                                (works well for bit-sliced succinct vectors).
+                                Latest version adds various optimizations related to SIMD, parallel memory reads,
+                                algorithmically better detection of search reductions.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                Optimizations: <code>bm::sparse_vector_scanner&lt;&gt;::bfind_eq_str()</code> -
+                                binary search in compressive memory vectors of strings.
+                                Implemented a new index for approximating the search using binary index.
+                                BM allows to setup a binding between <code>bm::sparse_vector_scanner</code> and a sperse
+                                vector itself, defining the fraction of elements to keep decompressed for the fast approximated
+                                search. Maintenance of a index fractionally reduces a memory efficiency, but significantly
+                                improves the search speed.
+                                New example was added to the code repo to illustrate the new API.
+                                <a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample08">strsvsample08</a>.
+                            </p>
+                        </li>
+                    </ol>
+
+                    <h2>Performance optimization details</h2>
+                    <p>
+                        <span class="image left"><img src="images/bench/bm7-12-3-scanner.png" width="1024" alt="Scanner benchmark" /></span>
+                    </p>
+                    <p>
+                        Search in sorted (or unsorted) compressive vectors of strings is at the core of many algorithms 
+                        related to dictionaries and indexes. The synthetic benchmark shown here reflects the speed 
+                        improvements depending on the sampling factor of 4, 8, 16, 32 and 64 of elements 
+                        (per each 64K of succinct vector entries) for the different variants of vectorization.
+                    </p>
+
+                    <p>This is a synthetic benchmark, using a pseudo-randomly generated dataset, resulting in 
+                    vector with substantial (but not overwhelming) compressibility. 
+                    </p>
+
+                    <p>Evidenced by the chart increase in approximate index sampling results in improvements in speed up
+                    until 32-64, at which point the return becomes deminishing. The specifics of a technical implementation 
+                    of sparse vector scanned search is that it uses cascade of logical AND-SUB (AND - AND NOT) on the 
+                    final stages of the search, where operation becomes memory bound (latency-bandwidth bound).  
+                    CPU loads memory as L1 cache lanes (64+ bytes in size), so the deminishing return I explain as a
+                    memory latency actor (compute is fast, but RAM access is slow). Of cause this is an oversimplification 
+                    and depends on the nature of our data as highly compressed vectors may show a somewhat different profile.
+                    
+                    </p>
+
+                    <p>Version 7.11.2 with all the optimizations shows 3x better performance comparing to the previous 
+                    version.
+                    </p>
+
+                    <h4>How does it compare against non-compressive binary search algorithms?</h4>
+
+                    <p>On the benchmarked data the non-compressive stock <code>std::lower_bound()</code> on sorted
+                    <code>std::vector&lt;&gt</code> would be faster (5 seconds vs 12 seconds), but at the cost of 
+                    significant (10x) memory consumption coming from various direct or indirect factors like memory 
+                    fragmentation. Overall some slowdown from using compressive data structures in real life applications 
+                    can be balanced with parallel MT algorithms.                
+                    </p>
+
+                    <section>
+                        <p>
+                            <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic7.12.3/" class="button">Download v7.11.2 (Sourceforge)</a>
+                            <a href="https://github.com/tlk00/BitMagic/releases/tag/v7.12.3" class="button">GitHub</a>
+                        </p>
+                    </section>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>

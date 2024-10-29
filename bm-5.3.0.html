@@ -1,0 +1,223 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 5.3.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+                        <section>
+                            <header>
+                                <h1>Version 5.3.0</h1>
+                                <span class="date">Nov 28, 2019</span>
+                            </header>
+                            <p></p>
+                            <h2>Release Notes</h2>
+                            <ol>
+                                <li>
+                                    New method to find first mismatch between two bit-vectors.
+                                    <code>bm::bvector&lt;&gt;::find_first_mismatch(..)</code>
+                                    It was possible to use XOR operation to identify all mismatches, new method
+                                    is works faster for cases when only first mismatch is important. New method
+                                    is optimized for for SSE4.2 and AVX2. If mismatch not found it returns false
+                                    which is an indication that two vectors are identical.
+                                </li>
+                                <li>New method to check bit-vectors for equality. 
+                                    <code>bool bm::bvector&lt;&gt;::equal(const bvector<Alloc>& bvect) const</code>
+                                </li>
+                                <li>
+                                    <code>bm::operation_deserializer&lt;&gt;</code> class simplified deserialization
+                                    method signatures not to require to pass an external scratch memory (temp block).
+                                    Algebra of Sets sample simplified to reflect this change 
+                                    <a href="https://github.com/tlk00/BitMagic/tree/master/samples/bvsetalgebra">bvsetalgebra</a></li>
+                                </li>
+                                <li>
+                                    Fixed compilation defects in C language mappings.
+                                </li>
+
+                            </ol>
+                            <p><a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic5.3.0/" class="button">Download v 5.3.0</a></p>
+
+                            <h2>Application notes on mismatch search</h2>
+
+                            <p>
+                                Mismatch search is needed as part of use cases related to fingerprint scan algorithms 
+                                where first mismatch position is needed to direct further search logic. Another case is
+                                comparison of sparse vectors where minimal mismatch between a set of pairs of vectors 
+                                is a subject of evaluation-comparison to do lexicographical comparison 
+                                (can be used in sort algorithms and Burrow-Wheeler Transform).  
+                            </p>
+
+                            <h3>Quick example</h3>
+
+<pre><code>
+bm::bvector&lt;&gt;   bv1 { 100, 200, 256 };
+bm::bvector&lt;&gt;   bv2 { 100, 222, 256 };
+bm::bvector&lt;&gt;::size_type pos;
+bool f = bv2.find_first_mismatch(bv1, pos);
+if (f)
+{
+    cout << "search mismatch position = " << pos << endl; // 200
+}
+</code></pre>
+
+                            <p>Please note that operation is symmetrical: bv2 against bv1 or bv1 against bv2 
+                            give you the same result.</p>
+ 
+                            <h3>SIMD optimizations</h3>
+
+
+<pre><code>
+inline
+bool avx2_bit_find_first_diff(const __m256i* BMRESTRICT block1,
+                                const __m256i* BMRESTRICT block2,
+                                unsigned* pos)
+{
+    unsigned BM_ALIGN32 simd_buf[8] BM_ALIGN32ATTR;
+
+    const __m256i* block1_end =
+    (const __m256i*)((bm::word_t*)(block1) + bm::set_block_size);
+    __m256i maskZ = _mm256_setzero_si256();
+    __m256i mA, mB;
+    unsigned simd_lane = 0;
+    do
+    {
+        mA = _mm256_xor_si256(_mm256_load_si256(block1), _mm256_load_si256(block2));
+        mB = _mm256_xor_si256(_mm256_load_si256(block1+1), _mm256_load_si256(block2+1));
+        __m256i mOR = _mm256_or_si256(mA, mB);
+        if (!_mm256_testz_si256(mOR, mOR)) // test 2x256 lanes
+        {
+            if (!_mm256_testz_si256(mA, mA))
+            {
+                // invert to fing (w != 0)
+                unsigned mask = ~_mm256_movemask_epi8(_mm256_cmpeq_epi32(mA, maskZ));
+                BM_ASSERT(mask);
+                int bsf = bm::bsf_asm32(mask); // find first !=0 (could use lzcnt())
+                _mm256_store_si256 ((__m256i*)simd_buf, mA);
+                unsigned widx = bsf >> 2; // (bsf / 4);
+                unsigned w = simd_buf[widx];
+                bsf = bm::bsf_asm32(w); // find first bit != 0
+                *pos = (simd_lane * 256) + (widx * 32) + bsf;
+                return true;
+            }
+            // invert to fing (w != 0)
+            unsigned mask = ~_mm256_movemask_epi8(_mm256_cmpeq_epi32(mB, maskZ));
+            BM_ASSERT(mask);
+            int bsf = bm::bsf_asm32(mask); // find first !=0 (could use lzcnt())
+            _mm256_store_si256 ((__m256i*)simd_buf, mB);
+            unsigned widx = bsf >> 2; // (bsf / 4);
+            unsigned w = simd_buf[widx];
+            bsf = bm::bsf_asm32(w); // find first bit != 0
+            *pos = ((++simd_lane) * 256) + (widx * 32) + bsf;
+            return true;
+        }
+        simd_lane+=2;
+        block1+=2; block2+=2;
+
+    } while (block1 < block1_end);
+    return false;
+}
+</code></pre>
+                            
+                            <p>
+                                Current approach to mismatch search is to advance forward using 2x256-bit AVX lanes
+                                which are XOR products used for comparison. Ones a long 512-bit mismatch found, it narrows it down
+                                with <code>_mm256_testz_si256() - _mm256_cmpeq_epi32() - _mm256_movemask_epi8() - BSF</code>. 
+                            </p>
+
+                            <p>
+                                The proposed approach makes assumption, that reading two AVX lanes is almost as cheap as one 
+                                (2 load ports) and input streams expose significant similarity so 512-bit 
+                                SIMD scan makes sense. This bitscan computation is quite trivial so 
+                                our performance here should be limited by the memory bandwidth. When mismatch found current code has to
+                                unload the vector back to memory and do BSF detection with a scalar instruction.
+                            </p>
+
+                            <p>SSE4.2 version is also available, uses the same vectorization approach, 
+                            the only difference is that it scans two 128-bit SSE lanes at once.
+                           </p>
+
+                            <h2>Code examples</h2>
+
+                            <ol>
+                                <li><a href="https://github.com/tlk00/BitMagic/tree/master/samples/bvsample02">bvsample02</a></li>
+                            </ol>
+
+                        </section>
+					</section>
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

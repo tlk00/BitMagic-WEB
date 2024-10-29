@@ -1,0 +1,487 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Optimization of memory usage</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+	<body>
+
+		<!-- Header -->
+			<header id="header">
+
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+
+                <!-- Nav -->
+                <nav id="nav">
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Documentation</a>
+                            <ul>
+                                <li><a href="getting-started.html">Getting started</a></li>
+                                <li><a href="design.html">Design</a></li>
+                                <li><a href="apis.html">API Reference</a></li>
+                                <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                <li><a href="release-notes.html">Release Notes</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#" class="icon fa-angle-down">Articles</a>
+                            <ul>
+                                <li><a href="use-case.html">Use cases</a></li>
+                                <li><a href="articles.html">Technical notes</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                        <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                    </ul>
+                </nav>
+                <!-- Nav -->
+
+			</header>
+
+		<!-- Wrapper -->
+			<div class="wrapper">
+
+				<!-- Main -->
+					<section class="main">
+						<section>
+                            <h1>Memory usage optimization</h1>
+                            <p>Anatoliy Kuznetsov. 2003.</p>
+                            
+							<h2>Introduction</h2>
+                            
+      <p>Bitsets generally offer perfect performance characteristics but in some specific cases they 
+	  are becoming inefficient because of the excessive memory usage. 
+	  It usually happens when we try to allocate big number of dense, sparse or even empty bitvectors. 
+	  It can be the case of large bit matrices, in-memory search systems, high dimensions space discretization, 
+	  etc. BitMagic library offers some adaptive algorithms to help to solve such problems.
+	</p>
+
+	<h3>The problem</h3>
+
+	<p>As your know <b>bvector</b> implements several algorithms of optimization of memory usage. 
+One is <a HREF="dGap.html">compression of GAPs</a>. 
+Bitvector is not kept as a continuous block of memory. It is reallocated upon demand and if necessary 
+some blocks can be converted to short int based GAP representation. It helps to save a lot of precious memory.
+</p>
+
+<p>In order to efficiently manipulate blocks of different structure bvector always has to know type of 
+every particular block. Such block types table is kept as a small efficient bitset. GAP blocks are marked 
+"1" in the internal set. The advantage of using internal bitset is high performance. 
+To adress 2<SUP>32</SUP>-1 bits <b>bvector</b> can alocate 65536 blocks which means we has to keep 65536 flags. 
+Even in the form of a bitset it gives us 8192 bytes of overhead. If we plan keeping thousands of sparse bitsets 
+it can give us a headache and thoughts about abandoning the bitsets strategy altogether in favor of other sets 
+implementation. 
+</p>
+
+<h3>Computational experiment</h3>
+
+<p>In order to investigate the problem I staged a computational experiment. 
+The task is to allocate 10000 bitvectors, leave 1/3 of bitvectros blank, 2/3 will be sparsely populated with
+150 pseudo random numbers generated in range of 0 to 100000000. 
+Then as a first assignment we are iterate all ON bits in all bitvectors, then OR all of them and then 
+release all allocated bitsets. During the test I am going to check the memory usage and performance. 
+The experiment test bed is Pentium III 650 MHz with 384M of SDRAM-133 running WinXP Home. 
+C++ Compiler: GCC 2.95.3 working under CYGWIN.
+</p>
+
+<h3>Memory requirements...1G+ ?</h3>
+
+<p>Lets do a simple analysis of memory requirements for the task if we use STL bitset or
+BM library in plain bitset mode. We plan to address 100000000 bits which gives us 100000000/8 
+approximately 12MB per bitset. For the whole pile of 10000 bitsets it gives us 119209 megabytes.
+It's already beyond the capabilities of an average workstation computer.
+And if we scale this up to +20000 sets or more (many real tasks will require this) 
+we soon will be falling out if typicall 32-bit adressable space it is recommended to use 64-bit
+system for this experiment.
+</p>
+
+<p>Please note, that I deliberetly avoid discussing any alternative implementations involving 
+different variants of lists, trees, etc.
+</p>
+
+
+<h3>The test program</h3>
+
+<pre><code>
+#include &lt;iostream&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;time.h&gt;
+#include "bm.h"
+
+using namespace std;
+
+
+typedef bm::bvector<> bvect;
+
+
+const unsigned setscount = 10000;
+const unsigned randombits = 150;
+const unsigned maxbit = 100000000;
+
+bvect*  bitsets[setscount];
+
+// ---------------------------------------------------------
+
+void CreateSets()
+{
+    unsigned mu = 0;
+    for (unsigned i = 0; i < setscount; ++i)
+    {
+        if ((i % 100) == 0) { cout << "."; cout.flush(); }
+        bitsets[i] = new bvect(bvect::BM_GAP);
+        bvect& bv = *bitsets[i];
+        mu += bv.calc_stat().memory_used;
+    }
+    cout << endl << "Created " << setscount << " sets." << endl; 
+    cout << "Used " << mu / (1024*1024)<< " MB." << endl;
+}
+
+// ---------------------------------------------------------
+
+void FillSets()
+{
+    unsigned mu, bit_blocks, gap_blocks;
+    cout << "Filling sets...";
+    mu = bit_blocks = gap_blocks = 0;
+    for (unsigned i = 0; i < setscount; ++i)
+    {
+        if ((i % 100) == 0) { cout << "."; cout.flush(); }
+        if ((i % 3) == 0) continue;
+        bvect& bv = *bitsets[i];
+        unsigned bn = 0;
+        for (unsigned j = 0; j < randombits; j+=3)
+        {
+            bn += (maxbit / randombits) + rand() % 10;
+            if (bn > maxbit) bn = rand() % maxbit;
+
+            bv[bn] = true;
+            bv[bn+1] = true;
+            bv[bn+2] = true;
+        }
+        bvect::statistics st = bv.calc_stat();
+        mu += st.memory_used;
+        bit_blocks += st.bit_blocks;
+        gap_blocks += st.gap_blocks;
+    }
+    cout << endl << "Used " << mu / (1024*1024)<< " MB." << endl;
+
+    cout << "BIT Blocks=" << bit_blocks << endl;
+    cout << "GAP Blocks=" << gap_blocks << endl;
+}
+
+// ---------------------------------------------------------
+
+void EnumerateSets()
+{
+    cout << "Enumerating sets...";
+    unsigned bitcnt = 0;
+    for (unsigned i = 0; i < setscount; ++i)
+    {
+        if ((i % 100) == 0) { cout << "."; cout.flush(); }
+        bvect& bv = *bitsets[i];
+
+        bvect::enumerator en = bv.first();
+        bvect::enumerator en_end = bv.end();
+
+        for (;en < en_end; ++en)
+        {
+            ++bitcnt;
+        }
+    }
+    cout << endl << bitcnt << endl;
+}
+
+// ---------------------------------------------------------
+
+void DestroySets()
+{
+    for (unsigned i = 0; i < setscount; ++i)
+    {
+        delete bitsets[i];
+    }
+}
+
+// ---------------------------------------------------------
+
+void OrSets()
+{
+    bvect res;
+    cout << "Calculating Or...";
+    for (unsigned i = 0; i < setscount; ++i)
+    {
+        if ((i % 100) == 0) { cout << "."; cout.flush(); }
+        const bvect& bv = *bitsets[i];
+
+        res |= bv;
+    }
+    cout << endl << res.count() << endl;
+}
+
+// ---------------------------------------------------------
+
+
+int main(void)
+{
+    time_t start_time = time(0);
+
+    CreateSets();
+    FillSets();
+    EnumerateSets();
+    OrSets();
+
+    time_t end_time = time(0);
+    unsigned ops = setscount / (end_time - start_time);
+    cout << "Time = " << (end_time - start_time) << endl;
+    cout << "Operations per second:" << ops << endl;
+
+    DestroySets();
+
+    return 0;
+}
+
+  
+</code></pre>
+
+<p>Program output:
+<pre>
+$ ./sample7
+................................................................................
+....................
+Created 10000 sets.
+Used 88 MB.
+Filling sets....................................................................
+...................................
+Used 153 MB.
+BIT Blocks=0
+GAP Blocks=333300
+Enumerating sets................................................................
+.......................................
+999900
+Calculating Or..................................................................
+.....................................
+5095
+Time = 18
+Operations per second:555
+</pre>
+
+
+<p>As you see application uses quite a lot of memory. 
+Most of this can be attributed to the overhead of keeping internal structures.
+And also due to the fact that BM implements dynamic bitset capable of addressing 
+4 billion bits. Just only allocation of 10000 bvectors costs us 88MB of memory.
+But here in this case we know upfront that bitsets are sparse and dynamic range is 
+limited. It means there is a good chance to tweak the program. 
+</p>
+
+
+
+<h3>The solution</h3>
+
+<p>First thing we do we redefine default bvector template arguments.</p>
+
+<p>Was:</p>
+<pre>
+typedef bm::bvector<> bvect;
+</pre>
+
+
+<p>Change:</p>
+<pre>
+typedef bm::bvector&lt;bm::standard_allocator, 
+                    bm::miniset&lt;bm::block_allocator, bm::SET_TOTAL_BLOCKS&gt; &gt; bvect;
+</pre>
+
+<p><i>bvector</i> template has two parameters. First is <a HREF="memalloc.html">memory allocator adaptor</a>. 
+We leave it as is. The second parameter is implementation of plain set class. By default fast
+plain and simple bitset is used (bvmini template). And now we are going to trade some performance for memory. 
+So we use <i>miniset</i> template class. It (uses simplified GAP compression, and should work when
+bvector works in GAP mode). If situation changes miniset dynamically adapts and uses plain bitset. 
+</p>
+
+<p>Lets see how it works.</p>
+
+<pre>
+$ ./sample7
+................................................................................
+....................
+Created 10000 sets.
+Used 12 MB.
+Filling sets....................................................................
+...................................
+Used 102 MB.
+BIT Blocks=0
+GAP Blocks=333300
+Enumerating sets................................................................
+.......................................
+999900
+Calculating Or..................................................................
+.....................................
+5095
+Time = 18
+Operations per second:555
+</pre>
+
+<p>As you see the initial memory consumption is down to 12MB. 
+And the overall memory consumption is 102MB. 
+Lets see what else we can get. The second change is how we create our bitvectors.
+(function CreateSets)
+</p>
+
+<p>Was:</p>
+<pre>
+bitsets[i] = new bvect(bvect::BM_GAP);
+</pre>
+
+<p>Change:</p>
+<pre>
+bitsets[i] = new bvect(bvect::BM_GAP, bm::gap_len_table_min<true>::_len);
+</pre>
+
+<p>Ok, running the application...</p>
+
+<pre>
+$ ./sample7
+................................................................................
+....................
+Created 10000 sets.
+Used 12 MB.
+Filling sets....................................................................
+...................................
+Used 41 MB.
+BIT Blocks=0
+GAP Blocks=333300
+Enumerating sets................................................................
+.......................................
+999900
+Calculating Or..................................................................
+.....................................
+5095
+Time = 18
+Operations per second:555
+</pre>
+
+<p>Our overall memory consumption is down to 41 megabytes!</p>
+
+<p>What does it mean and how it works?</p>
+
+<p>bvector does not allocates the maximum possible GAP block. 
+Istead it allocates some initial minimal size, and when it hits the limit it grows
+to the next level, and finally after several iterations ends up mutating into simple 
+bitblock. Because we are working with extremely sparse bitsets it never has the chance
+to become a bitblock.
+</p>
+
+<p>What we do here, we reloaded the default GAP levels table(gap_len_table) 
+and instructed bvector to use alternative <i>gap_len_table_min</i>, designed for use 
+in very sparse(dense) sets.
+</p>
+
+<p>Nedless to say that nothing prevents you from making your own level table 
+similar to how it is done in BM library.
+</p>
+
+<pre>
+/*! \brief Memory save table, carries GAP lengths for memory saver mode
+*/
+template<bool T> struct gap_len_table_min
+{
+    static const unsigned _len[GAP_LEVELS];
+};
+
+template<bool T>
+const unsigned gap_len_table_min<T>::_len[] = 
+                                { 32, 96, 128, 512 }; 
+</pre>
+
+<p>The only requirement is to keep number of GAP levels intact. 
+Actual block sizes are up to you. 
+</p>
+
+<p>Another thing to you can do is setting the upper limit. 
+By default bvector is capable to keep and address up to 2^32-1 bits. 
+It is very convenient, makes your program much more flexible and somehow prevents bugs.
+</p>
+
+<p>Third parameter in bvector constructor overrides the default.
+Now you can specify a custom upper limit. But please remember bvector does not check
+the limits setting bits beyond the maximum range result in undefined behavior.
+</p>
+
+<pre>
+bitsets[i] = new bvect(bvect::BM_GAP, bm::gap_len_table_min<true>::_len, maxbit);
+</pre>
+
+<p>Lets see the test run results:</p>
+
+<pre>
+$ ./sample7
+................................................................................
+....................
+Created 10000 sets.
+Used 2 MB.
+Filling sets....................................................................
+...................................
+Used 35 MB.
+BIT Blocks=0
+GAP Blocks=333300
+Enumerating sets................................................................
+.......................................
+999900
+Calculating Or..................................................................
+.....................................
+5095
+Time = 18
+Operations per second:555
+</pre>
+
+
+<p>Well, it gives us approximately 10M more. 
+Please note that the range limitaion option is kind of dangerous to use, 
+you have to make sure that all bit vectors you combine using OR, AND, XOR, SUB operations 
+are in the same range. 
+</p>
+
+
+						</section>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,245 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>BitMagic version 6.1.0</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 6.1.0</h1>
+                        <span class="date">Feb 8, 2020</span>
+                    </header>
+                    <p></p>
+                    <h2>Release Notes</h2>
+
+                    <ol>
+                        <li>
+                            Performance improvements for WebAssembly Emscripten builds with exceptions enabled.
+                            Emscripten implementation of C++ exceptions generates code which makes a jump to the browser
+                            to properly handle resources. It turns out that even in the absense of exceptions function
+                            calls can be significantly slowed down if there is no explicit "noexcept" declaration.
+                            New version now declares many low level functions as "noexcept" which improved
+                            BitMagic WebAsm performance up to 5x times.
+
+                        </li>
+
+                        <li>
+                            <p>
+                                New functions for more effcient operations with ranges and intervals.
+                            </p>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>bvector&lt;&gt;::is_all_one_range(..)</td>
+                                            <td>Check if all bits in the specified range are all 1s</td>
+                                        </tr>
+                                        <tr>
+                                            <td>bvector&lt;&gt;::any_range(..)</td>
+                                            <td>Check if any bits in the specified range are 1s</td>
+                                        </tr>
+                                        <tr>
+                                            <td>bvector&lt;&gt;::is_interval(..)</td>
+                                            <td>Check if all bits in the specified range are 1s AND flanked by 0s "011110"</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </li>
+                        <li>
+                            <a href="doxygen/html/sample22_8cpp-example.html">sample22.cpp</a> New example
+                            to help with ranges and intervals.
+                        </li>
+                    </ol>
+
+                    <p>
+                        <a href="https://sourceforge.net/projects/bmagic/files/bmagic/bmagic6.1.0/" class="button">Download v 6.1.0 (Sourceforge)</a>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/bm6.1.0" class="button">GitHub</a>
+                    </p>
+
+                    
+                    <h3>Technical notes on operations with ranges and intervals</h3>
+
+                    <h3>Motivation</h3>
+
+                    <p>
+                        Compressed bit-vectors are known to offer efficient logical operations with sets.
+                        Another use case is when sequence of bits is treated as a pattern "01100011110", where island of 'ones'
+                        encodes a start-stop (left-right) range.
+                    </p>
+
+                    <p>
+                        Ranges and intervals are applicable for many use cases from encoding of B&W images to representing
+                        events on genome (exon-intron gene structures, insertions-deletions, nucleotide matches and mismatches).
+                    </p>
+
+                    <p>
+                        RLE compressed bit-vectors often use some form of start-stop (or start-length) internal
+                        representation, thus could potentially support ranges and intervals. Adaptive nature of compressed
+                        bit-vectors would ensure, that blocks of high enthropy (short and random ranges would remain as bit-blocks)
+                        and medium to long ranges would be encoded in GAP compressed (RLE) form. All representations would
+                        support operations on ranges (for example: intersects).
+                    </p>
+
+                    <p>
+                        BitMagic supports serialization compression with Elias-Gamma or Binary Interpolative Coding.
+                        Combined with RLE/GAP coding it works well to efficiently store binary data models with expressed
+                        range structure.
+                    </p>
+
+                    <p>
+                        The missing piece here are functions (and iterators) to interpret a bit-vector as a collection
+                        of non-verlapping intervals.
+                    </p>
+
+                    <p>
+                        New methods: provide convinient APIs for ranges and work faster than if we had to simulate it
+                        with regular bit-vector methods.
+                    </p>
+
+                    <h3>Performance evaluation</h3>
+
+                    <p>
+                        As an benchmark example let us take function to check if closed range is "an interval"
+                        (all 1s flanked with 0s) on both ends ('0111110'). Our reference implementation would rely on
+                        bit-tests to check the flanks and bit-counting to make sure all bits in the range are set.
+                    </p>
+
+<pre>
+                    <code>
+    template<typename BV>
+    bool test_interval(const BV& bv,
+                       typename BV::size_type left, typename BV::size_type right) noexcept
+    {
+        bool is_left(0), is_right(0);
+        if (left) // check left-1 bit (if exists)
+            is_left = bv.test(left - 1);
+        if ((is_left == false) && (right < bm::id_max - 1))
+            is_right = bv.test(right + 1); // check [...right] range condition
+        if (is_left == false && is_right == false)
+        {
+            typename BV::size_type cnt = bv.count_range(left, right);
+            if (cnt == (1 + right - left))
+            return true;
+        }
+        return false;
+    }
+    </code>
+</pre>
+
+                    <p>
+                        It may work Ok if bit-vector is not compressed and particular block(s) in the range
+                        does not require more expensive binary search lookups and system is configured to support
+                        population counting acceleration.
+                    </p>
+
+                    <p>
+                        <span class="image left"><img src="images/bench/is_intervals.png" alt="inetrvals test benchmark" /></span>
+                    </p>
+
+                    <p>
+                        BitMagic v.6.1.0 offers specialized implementation of <code>bvector&lt;&gt;::is_interval(..)</code>.
+                        Synthetic benchmark data with a mix of different blocks used to illustrate performance efficiency.
+                        New method outperforms reference method in all cases. For this benchmark
+                        SIMD vectorization does not make a difference (code is heavy on conditions).
+                    </p>
+
+                    <h3>Benchmark source code</h3>
+                    <p>Available on GitHub <a href="https://github.com/tlk00/BitMagic/tree/master/tests/perf">BM Perf</a></p>
+
+                    <h3>TODOs</h3>
+
+                    <p>
+                        Need a special iterator-type class to interpret bvector&lt;&gt; as a sequence of intervals.
+                    </p>
+
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+        <!-- Footer -->
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>
