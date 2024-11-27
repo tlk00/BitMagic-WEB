@@ -1,287 +1,410 @@
 <!DOCTYPE HTML>
+<!--
+	Faction by Pixelarity
+	pixelarity.com | hello@pixelarity.com
+	License: pixelarity.com/license
+
+-->
 <html>
-    <head>
-        <title>Technical notes</title>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
-        <link rel="stylesheet" href="assets/css/main.css" />
-        <!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
-        <!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
-        <!-- Global site tag (gtag.js) - Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() { dataLayer.push(arguments); }
-            gtag('js', new Date());
-
-            gtag('config', 'UA-110216813-1');
-        </script>
+	<head>
+		<title>BitMagic Library</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
     </head>
-<body>
-    <!-- Header -->
-    <header id="header">
-        <!-- Logo -->
-        <span class="logo">
-            <a href="index.html">BitMagic</a>
-            <span>Library</span>
-        </span>
-        <!-- Nav -->
-        <nav id="nav">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li>
-                    <a href="#" class="icon fa-angle-down">Documentation</a>
-                    <ul>
-                        <li><a href="getting-started.html">Getting started</a></li>
-                        <li><a href="design.html">Design</a></li>
-                        <li><a href="apis.html">API Reference</a></li>
-                        <li><a href="doxygen/html/modules.html">Doxygen</a></li>
-                        <li><a href="release-notes.html">Release Notes</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#" class="icon fa-angle-down">Articles</a>
-                    <ul>
-                        <li><a href="use-case.html">Use cases</a></li>
-                        <li><a href="articles.html">Technical notes</a></li>
-                    </ul>
-                </li>
-                <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
-                <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
-            </ul>
-        </nav>
-        <!-- Nav -->
-    </header>
-    <!-- Wrapper -->
-    <div class="wrapper">
-        <!-- Main -->
-        <section class="main">
-            <section>
-                <h1>Tech.notes on compression and performance optimization </h1>
-                <p>
-                    <span class="image right">
-                        <img src="images/princeton03.jpg" alt="" />
-                    </span>
+	<body>
 
-                    <h3>Overview of Compression Algorithms in BitMagic Library</h3>
+		<!-- Header -->
+			<header id="header">
+				<!-- Logo -->
+					<span class="logo">
+						<a href="index.html">BitMagic</a>
+						<span>Library</span>
+					</span>
+                    
 
-                <p>
-                    Big picture description of succinct and
-                    compression methods used for bit-vectors and columnar data types.
-                    Bit-vectors, H-compression, D-GAP(RLE), Elias Gamma,
-                    Binary Interpolative Coding, Bit-plane compression,
-                    XOR compression.
-                    <ul class="actions">
-                        <li><a href="design.html" class="button small">More</a></li>
-                    </ul>
-                </p>
-
-                    <h3>XOR compression of bit-transposed vectors</h3>
-                <p>
-                    XOR compression is complementary filtering technique based on Hamming
-                    dissimilarity to better encode bit-transposed containers and
-                    collections of bit-vectors.
-                    <ul class="actions">
-                        <li><a href="bm-xor.html" class="button small">More</a></li>
-                    </ul>
-
-                </p>
-
-                    <h3>Binary Interpolative Coding</h3>
-                <p>
-                    Binary Interpolative Coding is a new encoding technique for compression of
-                    integer sequences. It offers 30% better compression ratio than delta coding + elias-gamma
-                    when applied to bit-vectors.
-                    <ul class="actions">
-                        <li><a href="bm5-bic.html" class="button small">More</a></li>
-                    </ul>
-                </p>
-
-                    <h3>Fast index construction (DNA fingerprints)</h3>
-                    <div>
-                <p>
-                    How to get indexing system from cold to operational in a matter of seconds.
-                    This tech.note discusses real-life scenario of DNA fingerprinting using
-                    SIMD, multi-threading and bandwidth optimizations.
-                    <ul class="actions">
-                        <li><a href="dna-search-idx.html" class="button small">More</a></li>
-                    </ul>
-                </p>
-
-                    <h3>Optimizations of Rank-Select operations</h3>
-                    <div>
-                <p>
-                    BitMagic Library implements Rank-Select index for fast succinct data structures.
-                    In this technical note we reviw data structures used for index construction, applicable
-                    SIMD optimizations and use of BMI1/2 instructions.
-                    <ul class="actions">
-                        <li><a href="rank-select.html" class="button small">More</a></li>
-                    </ul>
-                </p>
-
-
-                    <h3>Fast logical operations on groups of vectors (Aggregator) (bm::aggregator&lt;&gt;)</h3>
-                    <div>
-                        <p>
-                            BitMagic Library implements utilities for fast operations on groups of vectors.
-                            In this technical note we reviw cache-blocking optimization techniques, use of on-the-fly computed digests
-                            for pruning of search space, study impact of multi-way memory read, use of prefect and impact of SIMD
-                            (SSE4.2, AVX2) on performance.
-                            <ul class="actions">
-                                <li><a href="aggregator.html" class="button small">More</a></li>
-                            </ul>
-                        </p>
-
-                        <h3>Bit-transposed sparse vector as tool for compressed associative container</h3>
-                        <div>
-                            <p>
-                                BitMagic Library implements functionality for fast and memory efficient set to set relations.
-                                In this technical note we reviw cache-blocking optimization techniques and AVX2 can set to set Image
-                                operations and access to sparse bit-tranposed data 4-5x times faster.
-                                AVX2 SIMD code examples, useful for designers of hash-maps, sparse vectors and matrix algorithms.
-                                <ul class="actions">
-                                    <li><a href="set2set-assoc-remap-opt.html" class="button small">More</a></li>
+				<!-- Nav -->
+					<nav id="nav">
+						<ul>
+							<li><a href="index.html">Home</a></li>
+							<li>
+								<a href="#" class="icon fa-angle-down">Documentation</a>
+								<ul>
+                                    <li><a href="getting-started.html">Getting started</a></li>
+                                    <li><a href="design.html">Design</a></li>
+                                    <li><a href="apis.html">API Reference</a></li>
+                                    <li><a href="set-algebra.html">Algebra of Sets</a></li>
+                                    <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                                    <li><a href="release-notes.html">Release Notes</a></li>
+								</ul>
+							</li>
+                            <li>
+                                <a href="#" class="icon fa-angle-down">Articles</a>
+                                <ul>
+                                    <li><a href="use-case.html">Use cases</a></li>
+                                    <li><a href="articles.html">Technical notes</a></li>
                                 </ul>
-                            </p>
-                        </div>
+                            </li>
+							<li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+							<li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+						</ul>
+					</nav>
+                <!-- Nav -->
+			</header>
 
-                        <h3>Bit-transposed sparse vector as compressed associative container</h3>
-                        <div>
-                            <p>
-                                BitMagic Library implements functionality for fast and memory efficient set to set relations.
-                                In this technical note we reviw cache-blocking optimization techniques and AVX2 can set to set Image
-                                operations and access to sparse bit-tranposed data 4-5x times faster.
-                                AVX2 SIMD code examples, useful for designers of hash-maps, sparse vectors and matrix algorithms.
-                                <ul class="actions">
-                                    <li><a href="set2set-assoc-remap-opt.html" class="button small">More</a></li>
-                                </ul>
-                            </p>
-                        </div>
+		<!-- Wrapper -->
+			<div class="wrapper">
 
-                        <h3>Technical notes: Performance of sort in compressive memory</h3>
+				<!-- Main -->
+					<section class="main">
 
-                        <p>Techincal notes on performance of sort algorithms on compressive containers</p>
-                        <ul class="actions">
-                            <li><a href="bm-sort.html" class="button small">More</a></li>
-                        </ul>
+						<!-- Banner -->
+							<section id="banner">
+								<article data-position="bottom right">
+									<div class="inner">
+										<img src="images/slide-princeton01.jpg" alt="">
+										<h2>Toolkit for data mining</h2>
+										<p>BitMagic implements compressed bit-vector containers and tools for algebra of sets. It supports full variety of logical operations
+                                        (AND, OR, XOR, NOT, MINUS) used for building inverted list indexes and query acceleration in relational databases, full text search
+                                        systems, geo-spacial search systems, chemical substructure indexing, etc. BitMagic library offers multiple inverted list compression
+                                        options balancing memory consumption, speed and utility for fast in-memory operations, storage and network transfer
+                                        </p>
+										<ul class="actions">
+											<li><a class="button big" href="design.html">Learn More</a></li>
+										</ul>
+									</div>
+								</article>
+								<article data-position="top right">
+									<div class="inner">
+										<img src="images/slide-princeton02.jpg" alt="">
+										<h2>Scientific computing</h2>
+										<p>BitMagic implements algorithms for high-performance scientific computing: binary similarity and clustering (Humming, Tanamoto, etc),
+                                        binary fingerprinting and multi-dimentional binary analysis, randomization of binary sets, lexicographical comparison of bit-vectors.
+                                        All this are used in ranking and prediction algorithms in large scale retrieval systems
+                                        </p>
+										<ul class="actions">
+											<li><a class="button big" href="distopt.html">Learn More</a></li>
+										</ul>
+									</div>
+								</article>
+								<article data-position="right">
+									<div class="inner">
+										<img src="images/slide-sail01.jpg" alt="">
+										<h2>Performance</h2>
+										<p>BitMagic algorithms and containers offer cross platform, yet perfomance optimized code. 
+                                        Maximum performance can be achieved for 256-bit AVX2 builds (SSE2 and SSE4.2 also supported).
+                                        BitMagic uses CPU cache friendly algorithms, cache blocking, memory alignment, prefetch 
+                                        and other bandwidth optimization techniques. BitMagic uses memory pools and allocation 
+                                        performance optimizations useful in large-scale systems with lots of actors and 
+                                        threads actively using heap
+                                        </p>
+										<ul class="actions">
+											<li><a class="button big" href="performance.html">More</a></li>
+										</ul>
+									</div>
+								</article>
+								<article data-position="center">
+									<div class="inner">
+										<img src="images/slide-catoctin01.jpg" alt="">
+										<h2>Licensing</h2>
+										<p>BitMagic is a free open source library. You can use this software in any commercial or non-commercial projects, free of any charge.
+                                        The only requirement is that you have to explicitly mention this project in any derivative product, its WEB Site, published materials,
+                                        articles or any other work derived from this project or based on our code or know-how.</p>
+										<ul class="actions">
+											<li><a class="button big" href="license.html">License Agreement</a></li>
+										</ul>
+									</div>
+								</article>
+							</section>
 
-                        <h3>Case study: memory consumption and performance of star scheme ER JOIN acceleration</h3>
-                        <div>
-                            <p>
-                                Tech.notes analyzes the performance and memory characteristics of BitMagic library
-                                leveraging very sparse vectors while performing set algebra operations used for join
-                                acceleration. The goal of this case study is to analyze memory footprint of various types of set
-                                representations based on data generated to mimic analytical requests to join relational tables
-                                with one-to-many relationship and answer question of applicability of bit-vectors for RDBMS
-                                join acceleration.
-                                <ul class="actions">
-                                    <li><a href="case-ER-join.html" class="button small">More</a></li>
-                                </ul>
-                            </p>
-                        </div>
+						<!-- Blurb -->
+							<section>
+								<h1>Powerful Tool for Big Data Problems and Logical Inference</h1>
+                                
+								<p>BitMagic Library helps to develop high-throughput intelligent search systems, 
+                                promote combination of hardware optimizations and
+                                on the fly compression to fit inverted indexes and binary fingerprints into memory, minimize disk and network footprint.
+                                </p>
 
+                                <h2>Functions</h2>
+                                <p>
+                                    <ul>
+                                        <li>compressed bit-vector container, implements random access methods, 
+                                        with range of set-algebraic functions, ranks, find and traverse methods, 
+                                        STL-style iterators</li>
+                                        <li>set algebraic operations: AND, OR, XOR, MINUS for bit-vectors and integer sets.
+                                        Interoperable with low level C arrays and STL compatible containers (via iterators).
+                                        </li>
+                                        <li>serialization/hybernation of containers into compressed BLOBs for database persistence 
+                                        or in-memory compression
+                                        </li>
+                                        <li>memory management with focus on optimization (avoiding) allocations/de-allocations, 
+                                        minimization of heap fragmentation, custom allocators.</li>
+                                        <li>set algebraic operations on compressed bit-vector BLOBs</li>
+                                        <li>statistical engine to efficiently construct binary similarity and distance 
+                                        metrics (Tevrsky, Hamming, Tanimoto, Dice or your own)
+                                        </li>
+                                        <li>containers for sparse vectors and collections for native integer types. 
+                                        Works throug bit-transposition and compression of each separate bit-plain. 
+                                        Supports for NULL semantics. Can be used for memory-compresses vector/columnar 
+                                        search systems with focus on memory efficiency
+                                        </li>
+                                        <li>algorithms on sparse vectors: dynamic range clipping (work in progress!)</li>
+                                        <li>functional operations on integer sets (theory of groups): translations between sets,
+                                        mathematical images (work in progress!).</li>
+                                        <li>binary compressed matrices for ER-operations, materialized joins, 
+                                        one-to-many and many-to-many relationships, materialized RDBMS joins, graphs, etc.
+                                        (work in progress!)
+                                        </li>
+                                        <li>portable C-library layer as a bridge to Python, Java, .Net (work in progress!)</li>
+                                    </ul>
+                                </p>
+							</section>
 
+						<!-- Features -->
+							<section class="features alt">
+								<article class="icon fa-diamond">
+									<h3>C and C++ </h3>
+									<p>BitMagic C++ Templates library offers STL friendly containers and iterators, all portable yet investing into low level optimizations.
+                                    Our templates are header-only designed for easy integration into your big project. We provide lean (no RTTI, no STL, no exceptions) 
+                                    mapping into C language (JNI into Java and Scala - work in progress)</p>
+								</article>
+								<article class="icon fa-floppy-o">
+									<h3>Storage and communications</h3>
+									<p>Efficient serialization algorithms for saving containers. Serialization tools are provided for all containers, you can use
+                                    it with embedded systems (like Berkeley DB), large scale RDBMS systems (Oracle, MS SQL, MySQL) or NoSQL (memcached)
+                                    </p>
+								</article>
+								<article class="icon fa-laptop">
+									<h3>Cross-platform</h3>
+									<p>Bit-vectors can be serialized and sent over network for cross-platform data exchange and streaming,
+                                    used for construction of network middleware and micro-services</p>
+								</article>
+                                
+								<article class="icon fa-paper-plane">
+									<h3>Know-how</h3>
+									<p>The mission of our project is to share tools, and expertise, use cases and know-how
+                                       of search systems, bit-vectors, inverted lists, compression techniques, libraries, programming language bindings, etc.
+                                    </p>
+								</article>
+                                
+							</section>
 
-                        <h3>SSE2 vs CUDA</h3>
-                        <div>
-                            <p>
-                                Some thoughts on perspectives of GPU computing for bit-vector operations.
-                                Can you accelerate database search and functions with a graphics card?
-                                Is it feasible to build a GPU accelerated database system?
-                                <ul class="actions">
-                                    <li><a href="bmcudasse2.html" class="button small">Part 1</a></li>
-                                    <li><a href="bmcudasse2-2.html" class="button small">Part 2</a></li>
-                                </ul>
-                            </p>
-                        </div>
+						<!-- Spotlights -->
+							<section class="spotlights alt">
+								<article>
+									<a href="getting-started.html" class="image fit"><img src="images/bike1.jpg" alt=""></a>
+									<h3>Getting started</h3>
+									<p>BitMagic C++ Library implements easy, header only programming model.</p>
+									<ul class="actions">
+										<li><a href="getting-started.html" class="button">Learn More</a></li>
+									</ul>
+								</article>
+								<article>
+									<a href="repos.html" class="image fit"><img src="images/princeton-bike01.jpg" alt=""></a>
+									<h3>Public code repository</h3>
+									<p>BitMagic Library is hosted on GitHub and SourceForge.</p>
+									<ul class="actions">
+										<li><a href="repos.html" class="button">Learn More</a></li>
+									</ul>
+								</article>
+								<article>
+									<a href="use-case.html" class="image fit"><img src="images/bike02.jpg" alt=""></a>
+									<h3>Use cases</h3>
+									<p>Use cases and design patterns for various applications for compressed bitvectors.</p>
+									<ul class="actions">
+										<li><a href="use-case.html" class="button">Learn More</a></li>
+									</ul>
+								</article>
+								<article>
+									<a href="design.html" class="image fit"><img src="images/bike-wheel01.jpg" alt=""></a>
+									<h3>Design principles</h3>
+									<p>Articles about design and performance optimizations.</p>
+									<ul class="actions">
+										<li><a href="design.html" class="button">Learn More</a></li>
+									</ul>
+								</article>
+							</section>
 
+					</section>
 
-                        <h3>SIMD vectorization - SSE2</h3>
-                        <div>
-                            <p>
-                                Contemporary x86 CPUs offer variety of special commands for vector-based parallelism,
-                                where one command can process multiple data elements. SIMD - <strong>single instruction multiple data</strong>.
-                                Use of this special instructions is a valuable resource for tuning and optimization of algorithms.
-                                <ul class="actions">
-                                    <li><a href="bmsse2opt.html" class="button small">More</a></li>
-                                </ul>
-                            </p>
-                        </div>
+				<!-- Sidebar -->
+					<aside class="sidebar">
 
+						<!-- Blurb -->
+							<section>
+								<h2>Latest News</h2>
+                                <h4>July 1, 2024</h4>
+								<p>BitMagic C++ Library version 8.0.0 Released. 
+                                Better compression for bit-vectors and sparse vectors</p>
+								<ul class="actions">
+									<li><a href="bm-8.0.0.html" class="button">Learn More</a></li>
+								</ul>
+							</section>
 
-                        <h3>Efficient Binary Metrics</h3>
-                        <div>
-                            <p>
-                                BitMagic Library implements efficient algorithms for binary distances, used in building clusters and trees.
-                                Article explains principles of optimization of algorithms sensitive to <strong>CPU cache locality</strong> and memory bandwidth.
-                                <ul class="actions">
-                                    <li><a href="distopt.html" class="button small">More</a></li>
-                                </ul>
-                            </p>
-                        </div>
+						<!-- Featured posts -->
+                            <section class="featured-posts">
+                                <article>
+                                    <a href="gen-layout.html" class="image fit"><img src="images/lay/layout_bits.png" alt="Succinct genomics layouts"></a>
+                                    <header>
+                                        <span class="date">March, 2020</span>
+                                        <h3><a href="gen-layout.html">Genomics layout with bit-intervals</a></h3>
+                                    </header>
+                                    <p>
+                                        Use case discussion how to build genomics viewer models
+                                        with bit-intervals and sucinct data structures
+                                        <ul class="actions">
+                                            <li><a href="gen-layout.html" class="button">Continue Reading</a></li>
+                                        </ul>
+                                </article>
 
-                        <h3>Allocation and memory usage optimizations</h3>
-                        <div>
-                            <p>
-                                Bitsets generally offer perfect performance characteristics but in some cases
-                                they are becoming inefficient due to excessive memory usage. It usually happens when we try to allocate
-                                big number of dense, sparse or even empty bitvectors.
-                                <ul class="actions">
-                                    <li><a href="memsave.html" class="button small">Mem.save</a></li>
-                                    <li><a href="memalloc.html" class="button small">Allocators</a></li>
-                                </ul>
-                            </p>
-                        </div>
+                                <article>
+                                    <a href="star-search.html" class="image fit"><img src="images/bmsearch.png" alt="Compressed dictionary search"></a>
+                                    <header>
+                                        <span class="date">Dec, 2018</span>
+                                        <h3><a href="star-search.html">Dictionary compression and search</a></h3>
+                                    </header>
+                                    <p>
+                                        This tech.note discusses how to compress dictionary in memory
+                                        and keep it operational/searchable. Based on real-life data from NASA
+                                        Extragallactic database.
+                                        <ul class="actions">
+                                            <li><a href="star-search.html" class="button">Continue Reading</a></li>
+                                        </ul>
+                                </article>
 
-                        <h3>Delta GAP (DGAP) and hierarchical compression</h3>
-                        <div>
-                            <p>
-                                Bitmaps and inverted lists often benefit from some variants of RLE compression.
-                                BitMagic uses a variant, which allows fast binary search and memory consumption compatible with
-                                sorted integer lists. Hierarchical compression technique is used to manage lists of blocks in memory.
-                                When bit-vectors are serialized, we employ simple, yet efficient Elias Gamma coding.
-                                Latest versions of BitMagic also support Binary Interpolative Coding, which is even better
-                                than Elias-Gamma.
+                                <article>
+                                    <a href="dna-search-idx.html" class="image fit"><img src="images/bench/dna_idx_bench1.png" alt="Fast index construction"></a>
+                                    <header>
+                                        <span class="date">Nov, 2018</span>
+                                        <h3><a href="dna-search.html">Fast bit-vector index construction</a></h3>
+                                    </header>
+                                    <p>
+                                        This tech.note discusses how to get bit-vector index ready from cold to
+                                        oprational in split second, based on real-life DNA fingerprinting example.
+                                        <ul class="actions">
+                                            <li><a href="dna-search-idx.html" class="button">Continue Reading</a></li>
+                                        </ul>
+                                </article>
 
-                                <ul class="actions">
-                                    <li><a href="dGap.html" class="button small">DGAP</a></li>
-                                    <li><a href="hCompression.html" class="button small">H Compression</a></li>
-                                    <li><a href="dGap-gamma.html" class="button small">Elias-Gamma</a></li>
-                                    <li><a href="bm5-cmpr.html" class="button small">Binary Interpolative Coding</a></li>
-                                </ul>
-                            </p>
-                        </div>
+                                <article>
+                                    <a href="dna-search.html" class="image fit"><img src="images/bitap-search.png" alt="SHIFT-AND search"></a>
+                                    <header>
+                                        <span class="date">Oct, 2018</span>
+                                        <h3><a href="dna-search.html">Pattern search with fingerprints</a></h3>
+                                    </header>
+                                    <p>
+                                        Use case for substring pattern search using fingerprints and SHIFT-AND logical operations
+                                        on bit-vectors. SIMD and bandwidth optimization techniques.
+                                        <ul class="actions">
+                                            <li><a href="dna-search.html" class="button">Continue Reading</a></li>
+                                        </ul>
+                                    </p>
+                                </article>
 
+                                <article>
+                                    <a href="aggregator.html" class="image fit"><img src="images/bench/agg-bench01.png" alt="aggregator tests"></a>
+                                    <header>
+                                        <span class="date">Aug, 2018</span>
+                                        <h3><a href="aggregator.html">Fast logical operations on sets of bit-vectors</a></h3>
+                                    </header>
+                                    <p>
+                                        Optimization use case for logical operations on groups of bit-vectors.
+                                        Cache blocking, AVX2, building digests, N-way memory read pattern, bandwidth optimizations.
+                                        <ul class="actions">
+                                            <li><a href="aggregator.html" class="button">Continue Reading</a></li>
+                                        </ul>
+                                </article>
 
-                        <h3>64-bit programming and optimization</h3>
-                        <div>
-                            <p>
-                                64-bit programming checklist, examples of optimization techniques.
-                                <ul class="actions">
-                                    <li><a href="bm64opt.html" class="button small">More</a></li>
-                                </ul>
-                            </p>
-                        </div>
+                                <article>
+                                    <a href="set2set-assoc-remap-opt.html" class="image fit"><img src="images/bench/set2set-bench.png" alt=""></a>
+                                    <header>
+                                        <span class="date">July, 2018</span>
+                                        <h3><a href="set2set-assoc-remap-opt.html">Optimization of associative operations (Image function)</a></h3>
+                                    </header>
+                                    <p>
+                                        Optimization use case for set-to-set translation, using BitMagic sparse vector container.
+                                        Describes cache blocking/tiling and SIMD optimizations.
+                                        <ul class="actions">
+                                            <li><a href="set2set-assoc-remap-opt.html" class="button">Continue Reading</a></li>
+                                        </ul>
+                                </article>
 
+                                <article>
+                                    <a href="sparse-vector-search.html" class="image fit"><img src="images/bench/sparse_scanner-bench.png" alt=""></a>
+                                    <header>
+                                        <span class="date">June, 2018</span>
+                                        <h3><a href="sparse-vector-search.html">Unordered search with sparse vector</a></h3>
+                                    </header>
+                                    <p>
+                                        Technical note on fast, vectorized search in unordered, compressed sparse vector.
+                                        <ul class="actions">
+                                            <li><a href="sparse-vector-search.html" class="button">Continue Reading</a></li>
+                                        </ul>
+                                    </p>
+                                </article>
 
-</section>
-    </section>
+                            </section>
 
-    </div>
+						<!-- Posts -->
+							<section>
 
-    <!-- Footer -->
-    <footer id="footer">
-        <div class="copyright">
-            &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
-        </div>
-    </footer>
-    <!-- Scripts -->
-    <script src="assets/js/jquery.min.js"></script>
-    <script src="assets/js/skel.min.js"></script>
-    <script src="assets/js/util.js"></script>
-    <script src="assets/js/jquery.dropotron.min.js"></script>
-    <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
-    <script src="assets/js/main.js"></script>
-</body>
+							</section>
+
+					</aside>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer">
+				<div class="inner">
+					<section class="info">
+						<h3>About Us</h3>
+						<div class="about">
+							<p>Team of computer scientists and professional software engineers working on problems of big-data, graphical visualization, middleware and microservices.</p>
+                            <p></p>
+							<ul class="actions">
+								<li><a href="aboutus.html" class="button">Learn More</a></li>
+							</ul>
+						</div>
+						<div class="team">
+							<article>
+								<span class="image"><img src="images/ak-bw.jpg" alt=""></span>
+								<p>
+									<strong class="name">Anatoliy Kuznetsov</strong>
+									<span class="title">BitMagic C++ Library creator and main supporter.</span>
+                                    <a href="mailto:anatoliy_kuznetsov@yahoo.com">anatoliy_kuznetsov@yahoo.com</a>
+								</p>
+							</article>
+						</div>
+					</section>
+					<section class="contact">
+						<h3>Contact Us</h3>
+						<ul class="contact-icons">
+							<!--li class="icon fa-home"><a href="#">1234 Somewhere Road #80486<br>Nashville, TN 00000</a></li-->
+							<!--li class="icon fa-phone"><a href="#">(800) 555-0000 x12345</a></li-->
+							<li class="icon fa-envelope"><a href="mailto:info@bitmagic.io">info@bitmagic.io</a></li>
+							<!--li class="icon fa-facebook"><a href="#">facebook.com/untitled-tld</a></li-->
+							<li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+						</ul>
+					</section>
+				</div>
+				<div class="copyright">
+					&copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+            <script src="assets/js/skel.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/jquery.dropotron.min.js"></script>
+			<!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+			<script src="assets/js/main.js"></script>
+            
+          
+	</body>
 </html>
