@@ -1,0 +1,99 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>BitMagic version 8.0.1</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="assets/css/main.css" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', 'UA-110216813-1');
+        </script>
+    </head>
+    <body>
+        <header id="header">
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="wrapper">
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 8.0.1</h1>
+                        <span class="date">March 30, 2025</span>
+                    </header>
+                    <h2>Release Notes</h2>
+                    <ol>
+                        <li>
+                            <p>
+                                <strong>Enhanced Bit-Vector Serialization & Compression</strong><br>
+                                - Introduced a new, more efficient serialization format for bit-vectors, significantly improving compression.<br>
+                                - <strong>Note:</strong> This change is <strong>not backward compatible</strong>, but forward compatibility is maintained—new versions can read and deserialize older bit-vectors.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                <strong>Optimized Succinct Vectors Serialization</strong><br>
+                                - Succinct vectors serialization now benefits from the improved bit-vector compression, reducing storage and improving performance.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                <strong>Improved Error Handling & Robustness</strong><br>
+                                - Serialization error handling has been improved, with better exception-based reporting for corrupted or malformed serialized objects.<br>
+                                - Previously, deserialization failures could lead to crashes—now, errors are properly detected and reported.
+                            </p>
+                        </li>
+                        <li>
+                            <p>
+                                <strong>Code Cleanup & Static Analysis Fixes</strong><br>
+                                - Addressed compiler warnings and refined code based on static analysis, improving maintainability and stability.
+                            </p>
+                        </li>
+                    </ol>
+                    <p>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v.8.0.1" class="button">GitHub</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/main.js"></script>
+    </body>
+</html>
+
