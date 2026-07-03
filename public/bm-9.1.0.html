@@ -1,0 +1,345 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>BitMagic version 9.1.0</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="assets/css/main.css" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', 'UA-110216813-1');
+        </script>
+    </head>
+    <body>
+        <header id="header">
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="wrapper">
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 9.1.0</h1>
+                        <span class="date">July 3, 2026</span>
+                    </header>
+                    <h2>Release Notes</h2>
+                    
+                    <h3>New Functionality</h3>
+                    <p>
+                        This update to the BitMagic library adds the <code>sparse_vector_float</code> container, designed to store both sparse and dense floating-point data in a succinct format that reduces memory overhead, with additional compression when serialized to disk. Alongside this new container, the update adds support for serialization and deserialization of this new container, as well as optimized search capabilities integrated directly into the existing <code>sparse_vector_scanner</code> class. Some use cases for a sparse_vector_float include storing geospatial data such as elevations or temperatures, machine learning, sparse graphs, and storing time-series such as financial data.
+                    </p>
+
+                    <h3>New Classes</h3>
+                    <ul>
+                        <li><code>sparse_vector_float</code></li>
+                        <li><code>sparse_vector_float_serial_layout</code></li>
+                        <li><code>sparse_vector_float_serializer</code></li>
+                        <li><code>sparse_vector_float_deserializer</code></li>
+                    </ul>
+
+                    <p>
+                        These are wrapper classes for the sparse vector class type, and allow for the storage of 32-bit floats.
+                    </p>
+                    <p>
+                        As floats do not have an unsigned version, they cannot be stored in a normal sparse vector. The sparse_vector_float series of classes allows for the storage of these floats by splitting received floats into their sign, exponent, and mantissa. The exponent and mantissa are stored in two sparse vectors, the type of which is given by the user, and the sign is stored in a bit vector of the same type as the given sparse vectors.
+                    </p>
+                    <p>
+                        This allows for the storage of floats in a single sparse vector object, and instead of the user having to split a float and store it in 3 separate containers themselves, they can instead store it in a single sparse_vector_float object and have operations on that sparse_vector_float affect all 3 inner containers simultaneously. 
+                    </p>
+                    <p>
+                        The sparse_vector_float_serial_layout, sparse_vector_float_serializer, and the sparse_vector_float_deserializer are used for serialization and deserialization of sparse_vector_float objects, and are largely used in the same way as the sparse vector version of the classes. 
+                    </p>
+
+                    <h3>New Methods</h3>
+                    <h4>Serialization Routines</h4>
+                    <ul>
+                        <li><code>sparse_vector_float_serialize()</code></li>
+                        <li><code>sparse_vector_float_deserialize()</code></li>
+                    </ul>
+                    <p>
+                        These functions are the same as their sparse vector counterparts but use the sparse_vector_float serializer/deserializer’s    
+                    </p>
+
+                    <h3>New Methods</h3>
+                    <ul>
+                        <li><code>sparse_vector_scanner::find_gt_float</code> (Greater Than)</li>
+                        <li><code>sparse_vector_scanner::find_lt_float</code> (Less Than)</li>
+                        <li><code>sparse_vector_scanner::find_ge_float</code> (Greater Than or Equal)</li>
+                        <li><code>sparse_vector_scanner::find_le_float</code> (Less Than or Equal)</li>
+                        <li><code>sparse_vector_scanner::find_range_float</code> (Bounded Range)</li>
+                    </ul>
+                    <p>
+                        These methods allow for a scanner to find the greater than, less than, greater than or equal to, less than or equal to, and a specific range of values in a sparse_vector_float object, allowing easier parsing of sparse_vector_floats.
+                    </p>
+
+                    <h3>New Samples</h3>
+                    <ul>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svfsample01" target="_blank">svfsample01</a>:</strong> 
+                            Basic operations (import, set, get, optimize, etc.)
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svfsample02" target="_blank">svfsample02</a>:</strong> 
+                            Serialization and Const iterator operations
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svfsample03" target="_blank">svfsample03</a>:</strong> 
+                            Range methods (clear, compare, equal, join, merge)
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svfsample04" target="_blank">svfsample04</a>:</strong> 
+                            Extracting from a sparse_vector_float (decode, extract, gather, extract_range)
+                        </li>
+                    </ul>
+
+                    <hr />
+
+                    <h3>Performance & Memory Analysis Data</h3>
+                    
+                    <h4>1. In-Memory Sizing Analysis (Bytes)</h4>
+                    <p>Calculated via BitMagic's <code>calc_stat::memory_used</code> metrics. </p>
+                    <ul>
+                        <li><code>std::vector&ltfloat&gt</code></li>
+                        <li><code>sparse_vector_float</code> using a <code>sparse_vector</code></li>
+                        <li style="margin-left: 20px;">With Linear data going from -N/2 * .00123 to N/2 * .00123</li>
+                        <li style="margin-left: 20px;">With Random data going from -1,000,000 to 1,000,000</li>
+                        <li><code>sparse_vector_float</code> using an <code>rsc_sparse_vector</code> with 35% NULL’s</li>
+                        <li style="margin-left: 20px;">With Linear data going from -N/2 * .00123 to N/2 * .00123</li>
+                        <li style="margin-left: 20px;">With Random data going from -1,000,000 to 1,000,000</li>
+                    </ul>
+        
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Container Configuration</th>
+                                    <th>100,000 Elements</th>
+                                    <th>1,000,000 Elements</th>
+                                    <th>10,000,000 Elements</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>std::vector&lt;float&gt;</code></td>
+                                    <td>400,024</td>
+                                    <td>4,000,024</td>
+                                    <td>40,000,024</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>SVF Linear</strong></td>
+                                    <td>338,176</td>
+                                    <td>1,819,648</td>
+                                    <td>12,703,488</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>SVF Random</strong></td>
+                                    <td>539,232</td>
+                                    <td>3,870,464</td>
+                                    <td>36,430,080</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RSC SVF Linear (35% Null)</strong></td>
+                                    <td>266,256</td>
+                                    <td>1,558,288</td>
+                                    <td>11,536,280</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RSC SVF Random (35% Null)</strong></td>
+                                    <td>351,344</td>
+                                    <td>2,765,584</td>
+                                    <td>26,786,576</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <img src="images/9.1.0_Memory_100k.png" alt="Graph comparing memory usage in 100,000 elements" width="750">
+                    <img src="images/9.1.0_Memory_1M.png" alt="Graph comparing memory usage in 1,000,000 elements" width="750">
+                    <img src="images/9.1.0_Memory_10M.png" alt="Graph comparing memory usage in 10,000,000 elements" width="750">
+
+                    <h4>2. Serialized Size (Bytes)</h4>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Container Configuration</th>
+                                    <th>100,000 Elements</th>
+                                    <th>1,000,000 Elements</th>
+                                    <th>10,000,000 Elements</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>std::vector&lt;float&gt;</code></td>
+                                    <td>400,024</td>
+                                    <td>4,000,024</td>
+                                    <td>40,000,024</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>SVF Linear</strong></td>
+                                    <td>191,310</td>
+                                    <td>956,513</td>
+                                    <td>6,890,859</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>SVF Random</strong></td>
+                                    <td>375,352</td>
+                                    <td>3,470,964</td>
+                                    <td>34,693,378</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RSC SVF Linear</strong></td>
+                                    <td>149,633</td>
+                                    <td>1,166,626</td>
+                                    <td>9,122,900</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>RSC SVF Random</strong></td>
+                                    <td>254,964</td>
+                                    <td>2,546,823</td>
+                                    <td>25,480,286</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <img src="images/9.1.0_Serialized_100k.png" alt="Graph comparing serialized size of 100,000 elements" width="750">
+                    <img src="images/9.1.0_Serialized_1M.png" alt="Graph comparing serialized size of 1,000,000 elements" width="750">
+                    <img src="images/9.1.0_Serialized_10M.png" alt="Graph comparing serialized size of 10,000,000 elements" width="750">
+
+                    <h4>3. Range Query Scan Latency Profile</h4>
+                    <p>
+                        Search Comparison between Data structures with 10,000,000 elements
+                    </p>
+                    <ul>
+                        <li>Linear Data</li>
+                        <li style="margin-left: 20px;">Data in Data Structures</li>
+                        <li style="margin-left: 40px;">10,000,000 linear elements</li>
+                        <li style="margin-left: 40px;">Range of -6150 to 6150 (or -N/2 * .00123 to N/2 * .00123)</li>
+                        <li style="margin-left: 20px;">Search Info</li>
+                        <li style="margin-left: 40px;">1000 searches performed on 1000 ranges</li>
+                        <li style="margin-left: 40px;">Ranges are 2 random numbers from -6150 to 6150</li>
+                        <li style="margin-left: 20px;">Legend</li>
+                        <li style="margin-left: 40px;">Linearly search on an std::vector&ltfloat&gt</li>
+                        <li style="margin-left: 40px;">sparse_vector_scanner on a sparse_vector_float using a sparse_vector</li>
+                        <li style="margin-left: 40px;">Using the Const Iterator of a sparse_vector_float using a sparse_vector</li>
+                        <li style="margin-left: 40px;">sparse_vector_scanner on a sparse_vector_float using an rsc_sparse_vector</li>
+                        <li style="margin-left: 40px;">Using the Const Iterator of a sparse_vector_float using an rsc_sparse_vector</li>
+                        <li>Random data</li>
+                        <li style="margin-left: 20px;">Data in Data structures</li>
+                        <li style="margin-left: 40px;">10,000,000 random numbers</li>
+                        <li style="margin-left: 40px;">Range of -1,000,000 to 1,000,000</li>
+                        <li style="margin-left: 20px;">Search Info</li>
+                        <li style="margin-left: 40px;">1000 searches performed on 1000 ranges</li>
+                        <li style="margin-left: 40px;">Ranges are 2 random numbers from -1,000,000 to 1,000,000</li>
+                        <li style="margin-left: 40px;">Legend</li>
+                        <li style="margin-left: 20px;">Same as Linear Data</li>
+                    </ul>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Execution Pipeline Model</th>
+                                    <th>Linear Data Dataset</th>
+                                    <th>Random Data Dataset</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>std::vector&lt;float&gt;</code></td>
+                                    <td>18.6000 s</td>
+                                    <td>41.1800 s</td>
+                                </tr>
+                                <tr>
+                                    <td><code>sparse_vector_scanner</code></td>
+                                    <td><strong>0.8433 s</strong></td>
+                                    <td><strong>5.1880 s</strong></td>
+                                </tr>
+                                <tr>
+                                    <td>SVF <code>const_iterator</code></td>
+                                    <td>112.8000 s</td>
+                                    <td>239.2800 s</td>
+                                </tr>
+                                <tr>
+                                    <td><code>std::vector&lt;float&gt;</code> (35% NaN)</td>
+                                    <td>24.0400 s</td>
+                                    <td>32.9500 s</td>
+                                </tr>
+                                <tr>
+                                    <td>RSC <code>sparse_vector_scanner</code> (35% Null)</td>
+                                    <td>106.6200 s</td>
+                                    <td>230.5200 s</td>
+                                </tr>
+                                <tr>
+                                    <td>RSC SVF <code>const_iterator</code> (35% Null)</td>
+                                    <td>172.3200 s</td>
+                                    <td>268.3200 s</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <img src="images/9.1.0_TimeGraph.png" alt="Graph comparing time to run 1,000 range searches in with search methods in seconds" width="750">
+
+                    <hr />
+
+                    <h3>Fixes</h3>
+                    <p>General</p>
+                    <ul>
+                        <li>Fixed type parsing rules for <code>chrono_taker&lt;&gt;</code> allocations inside <code>perf.cpp</code> and <code>t.cpp</code> where missing template tags caused compilation failures.</li>
+                        <li>Resolved diagnostic warnings across core modules: <code>bmaggregator.h</code>, <code>bmblocks.h</code>, <code>bmfunc.h</code>, <code>bmserial.h</code>, <code>perf.cpp</code>, and <code>t.cpp</code>.</li>
+                        <li>Updated <code>CMakeLists.txt</code> to not use <code>-march=native</code> by default for non-x86 builds, and to instead use <code>-O2</code></li>
+                    </ul>
+                    <p><code>sparse_vector_scanner&lt;SV&gt;</code>:</p>
+                    <ul>
+                        <li>Fixed an error where in the <code>find_gt_horizontal()</code> method a duplicate of a given bvector was created, but if the given bvector was read only it would copy the read only, causing an error. Changed how it was copying the bvector to using <code>bit_or()</code></li>
+                    </ul>
+                    <p><code>t.cpp</code></p>
+                    <ul>
+                        <li>Fixed an error in the TestCompressSparseVector() test where in the Compressed load() stress test cmp 3 was testing csv2 instead of csv1</li>
+                        <li>Fixed an error where in DetailedCheckCompressedDecode() where an assert would fail if given an empty rsc_sparse_vector, despite some tests being an empty rsc_sparse_vector</li>
+
+                    </ul>
+
+                    <p>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v9.1.0" class="button">GitHub Releases</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/main.js"></script>
+    </body>
+</html>
