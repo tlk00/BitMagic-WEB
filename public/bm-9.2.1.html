@@ -1,0 +1,165 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>BitMagic version 9.2.1</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="assets/css/main.css" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', 'UA-110216813-1');
+        </script>
+    </head>
+    <body>
+        <header id="header">
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="wrapper">
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 9.2.1</h1>
+                        <span class="date">July 31, 2026</span>
+                    </header>
+
+                    <h2>Release Notes</h2>
+                    <h3>Improvements</h3>
+                    <p>
+                        This update improves the speed of <code>sparse_vector_scanner</code> searches, particularly searches involving <code>sparse_vector_float</code> objects, by adding new internal methods.
+                    </p>
+ 
+                    <h4>Reasons for Improvements</h4>
+                    <ul>
+                        <li>Removed the creation of a new internal unsigned int scanner with every single search, and now the internal scanner is only created once</li>
+                        <li>Added an internal mask so that when a float search based on a previous search occurs, it does not search the entire sparse vector</li>
+                        <li>Reduced the amount of times decompression of an internal bvector occurs</li>
+                    </ul>
+ 
+                    <hr />
+ 
+                    <h3>Performance Analysis Data</h3>
+                    <p>
+                        Comparing time to run 1,000 <code>find_range_float</code> searches between 9.1.0 and 9.2.1
+                    </p>
+                    <p>
+                        Each vector has 20 million elements
+                    </p>
+                    <p>
+                        <code>std::vector</code> linearly goes over every element in the vector.
+                    </p>
+    
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Implementation</th>
+                                    <th>Linear Data 9.1.0</th>
+                                    <th>Random Data 9.1.0</th>
+                                    <th>Linear Data 9.2.1</th>
+                                    <th>Random Data 9.2.1</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>std::vector</code></td>
+                                    <td>52</td>
+                                    <td>83.34</td>
+                                    <td>52</td>
+                                    <td>83.34</td>
+                                </tr>
+                                <tr>
+                                    <td><code>sparse_vector_scanner</code></td>
+                                    <td><strong>0.8433</strong></td>
+                                    <td><strong>12.88</strong></td>
+                                    <td><strong>0.64</strong></td>
+                                    <td><strong>14.66</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><code>std::vector</code> (35% NaN)</td>
+                                    <td>58.46</td>
+                                    <td>69.18</td>
+                                    <td>58.46</td>
+                                    <td>69.18</td>
+                                </tr>
+                                <tr>
+                                    <td>RSC <code>sparse_vector_scanner</code> (35% Null)</td>
+                                    <td>89.5</td>
+                                    <td>479.28</td>
+                                    <td>41.59</td>
+                                    <td>150</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <img src="images/9.2.1_speed_comparison.png" alt="Graph comparing time to run 1,000 find_range_float searches on vectors with 20 million elements" width="750">
+ 
+                    <hr />
+ 
+                    <h3>New Methods</h3>
+                    <ul>
+                        <li><code>sparse_vector_scanner::find_range_float_unbounded</code> &mdash; finds every value in an open interval, unlike the existing <code>find_range_float</code> method</li>
+                    </ul>
+ 
+                    <h3>New Samples</h3>
+                    <ul>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/xsample11" target="_blank">xsample11</a>:</strong>
+                            Demonstrates uses for <code>sparse_vector_float</code> objects with financial data
+                        </li>
+                    </ul>
+ 
+                    <hr />
+ 
+                    <h3>Fixes</h3>
+                    <ul>
+                        <li>Fixed a major bug in <code>bvector&lt;&gt;::bit_or_and()</code> where the target block was not preserved when AND produces an empty block</li>
+                    </ul>
+
+
+                    <p>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v9.2.1" class="button">GitHub Releases</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/main.js"></script>
+    </body>
+</html>
