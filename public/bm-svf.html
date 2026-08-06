@@ -578,6 +578,16 @@
                         </tr>
                     </table>
 
+                    <h2>Conclusion</h2>
+                    <p>
+                        As seen from the evidence gathered, <code>bm::sparse_vector_float</code> has an advantage
+                        over <code>std::vector&ltfloat&gt</code> in terms of decreased memory usage bother when serialized and unserialized.
+                        There is a slight disadvantage when using smaller, random datasets compared to using an <code>std::vector</code>
+                        due to the increased overhead, however this disadvantage disappears when looking at larger datasets. There is also
+                        an advantage in decreased search times, particularly in datasets that are linear or contain small fluctuations around 
+                        some normal value(financial datasets).
+                    </p>
+
 
 
                     <h2>References</h2>
