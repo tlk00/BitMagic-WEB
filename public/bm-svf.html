@@ -1,0 +1,615 @@
+﻿<!DOCTYPE HTML>
+<html>
+	<head>
+        <title>Using Sparse Vector Floats on Financial Datasets</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!--[if lte IE 8]><script src="assets/js/ie/html5shiv.js"></script><![endif]-->
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<!--[if lte IE 9]><link rel="stylesheet" href="assets/css/ie9.css" /><![endif]-->
+		<!--[if lte IE 8]><link rel="stylesheet" href="assets/css/ie8.css" /><![endif]-->
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+
+            gtag('config', 'UA-110216813-1');
+        </script>
+	</head>
+    <body>
+
+        <!-- Header -->
+        <header id="header">
+
+            <!-- Logo -->
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+
+            <!-- Nav -->
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Articles</a>
+                        <ul>
+                            <li><a href="use-case.html">Use cases</a></li>
+                            <li><a href="articles.html">Technical notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+            <!-- Nav -->
+
+        </header>
+
+        <!-- Wrapper -->
+        <div class="wrapper">
+
+            <!-- Main -->
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Using Sparse Vector Floats on Financial Datasets</h1>
+                        <span class="date">Anatoliy Kuznetsov. July 2026 (based on BM v.9.2.1+)</span>
+                    </header>
+                    <p></p>
+
+                    <h2>Introduction</h2>
+
+                    <p>
+                        Modern financial datasets store huge amounts of data, 
+                        requiring data structures that have low memory footprints, as well as fast searching 
+                        and minimal serialization overhead. Standard containers such as the <code>std::vector&ltfloat&gt</code> 
+                        can require significant amounts of memory when storing millions of float values over large timelines. 
+                        The <code>bm::sparse_vector_float</code> class addresses this issue by breaking down floats into their sign, exponent, 
+                        and mantissa, and storing them in separate succinct vectors, allowing for increased data compression and faster 
+                        searches through bitwise operations.
+                    </p>
+                    <p>
+                        By storing financial data in <code>sparse_vector_floats</code>, since the floats are split into the the sign, 
+                        exponent, and mantissa, the compression of the dataset is increased, as often financial data such as 
+                        exchange rates have many consecutive values with the same exponents, allowing for increased data compression. 
+                        It also allows for faster searching of the dataset through the bm::sparse_vector_scanner class by evaluating 
+                        conditions separately on the different components of the float using bit operations. 
+                    </p>
+                    <p>
+                        xsample11 shows a practical application of storing exchange rates in 
+                        <code>bm::sparse_vector_floats</code>. The example imports the exchange rates between 
+                        EUR/USD and USD/JPY, and optimizes and freezes the dataset as no changes would 
+                        occur such as adding or removing values. The exchange rate information stored 
+                        specifically in bm::sparse_vector_floats is the low, high, open, and close of the 
+                        exchange rate for nearly every hour for 16 years. These vectors each hold approximately 
+                        100,000 values, and each take up approximately 373,000 bytes in memory. Comparing this to an 
+                        <code>std::vector&ltfloat&gt</code>, which takes 399,852 bytes to store the data of one of these vectors, 
+                        a bm::sparse_vector_float has an approximately 7% decrease in size. 
+                        Instead of keeping these vectors loaded throughout the duration of the program, 
+                        it is possible to serialize the vectors and store them that way, unserializing them when needed, 
+                        which decreases their size to 230,000 bytes, which is not possible with <code>std::vectors</code> so the size 
+                        decrease is approximately 42.5%.
+                    </p>
+
+
+                    <h2>Description of the Method</h2>
+
+                    <span class="image right"><img src="images/Float_Into_Bitplanes.png" alt="Visual of how a float gets stored in a sparse vector float" width="1024"></span>
+
+                    <p>
+                        Floats are structured with IEEE 754, which splits floats into 3 parts, the sign, 
+                        the first bit which determines if the float is positive or negative, the exponent, 
+                        the next 8 bits determines the magnitude of the float, and the mantissa, remaining 
+                        23 bits of the float that indicate specific values in the float. A <code>bm::sparse_vector_float</code> 
+                        data structure stores floats by splitting the floats into their respective signs, stored as 
+                        bvectors, exponents, and mantissas, stored as some type of sparse_vector, determined on 
+                        creation by a user. Stored this way, this is equivalent to storing floats in a <code>std::vector&ltfloat&gt</code> as 
+                        although it splits up the float, it is not lossy compression or an approximation of the original float, 
+                        so it contains the same 32 bits, just stored separately. 
+                    </p>
+                    <p>
+                        Once the float is separated into its 3 parts, in each sparse_vector the exponents 
+                        and mantissas are split into their individual bits, each bit being stored on a different 
+                        bitplane of a bitmatrix. Fig. 1 has a visual of how a float is split up. 
+                    </p>
+
+
+                    <p style="clear: right;">
+                        Part of the compression in the <code>bm::sparse_vector_float</code> comes from the compressive qualities 
+                        of a bm::sparse_vector, as a <code>bm::sparse_vector_float</code> is essentially a wrapper for the class, 
+                        so the compression techniques like bit-blocks and GAP-blocks come from storing the data internally 
+                        as sparse and bit vectors. More details on sparse_vector compression techniques can be found at the 
+                        <a href="design.html">Design</a> page. 
+                        The other part of the compression comes back to how floats are structured. 
+                        If you have a dense dataset with the value of the floats close together, they will share many 
+                        similarities, particularly the sign and exponent of the float. For example, if you have a dataset 
+                        with values between 128 and 255, then every single value will have the same sign and exponent. 
+                        This means that entire bitplanes can be only a single value, 1 or 0. This allows for a lot of 
+                        compression as you can have an entire plane represented in 8 bytes with the topmost pointer 
+                        pointing to nothing if a plane is all 0’s. On the other hand, mantissas are close to uniformly random, 
+                        with 2 floats that are close together in value can have very different mantissas, meaning the mantissa does 
+                        not compress as well. Despite this it can still partially compress as they may still have some 
+                        similarities to surrounding values, like the first few bits being similar.
+                    </p>
+
+                    <span class="image left"><img src="images/BM-design4.png" width="1024" alt="" /></span>
+                    
+                    <p>
+                        When storing the data with NULLs and/or using an RSC sparse_vector, then 
+                        entire columns can be dropped from the vector, which further improves 
+                        compression as the sparse vector can just store the existing values, so if there are 
+                        10 million values with 35% being nulls, then it only needs to store 6.5 million values, as 
+                        opposed to a sparse_vector which would store all 10 million values. See Fig. 4 for a visual
+                        of how it works, or go to the <a href="design.html">Design</a> page for more details.
+                    </p>
+
+
+                    <p>
+                        A sparse_vector_float is a new succinct data structure due to the way it stores data, 
+                        instead of just being an array of floats, at its base it is 3 seperate arrays of parts of floats, 
+                        which exploits magnitude clustering of data in order to increase compression. While doing this, 
+                        It supports random access and efficient searching of its data while remaining compressed.
+                    </p>
+
+
+                    <h2 style="clear: left;">Search in a sparse_vector_float</h2>
+
+                    <p>
+                        Because floats are decomposed into separate fields, the <code>bm::sparse_vector_scanner</code> class 
+                        can search the internal sparse vectors directly to locate values matching a given range. Determining 
+                        whether a float falls within a target range comes down to comparing its exponent and mantissa fields 
+                        independently: searching the exponent's sparse vector first narrows the candidates to every float within 
+                        the correct order of magnitude. From there, searching the mantissa refines that set further, isolating 
+                        floats that fall inside the target range in magnitude but landed outside it once their precise value 
+                        is considered. The results from both searches are then combined through a series of bitwise operations, 
+                        producing a mask that marks exactly the floats within the requested range.
+                    </p>
+
+                    <p>
+                        Example: <br>
+                        Vector: 50, 100,120, 200, -120 <br>
+                        Goal: Find every float larger than 110
+                    </p>
+
+                    <p>
+                        Step 1: Check the exponent of each vector, and find that all but 50 have the same or greater exponent as 110. 
+                        x represents having a bit turned off in the bitvector <br>
+                        Main vector: x, 100,120, 200, -120
+                    </p>
+
+                    <p>
+                        Step 2: Find every float with the same exponent as 110<br>
+                        Exponent vector: x, 100,120, x, -120
+                    </p>
+
+                    <p>
+                        Step 3: Check the mantissas to find every float with a mantissa less than 110's mantissa, that is also in the Exponent vector<br>
+                        Mantissa vector: x, 100, x, x, x
+                    </p>
+
+                    <p>
+                        Final Step: From this, by using several bitwise operations to subtract elements not fitting the 
+                        range specified from the main vector. through earlier steps, as well as checking the signs bvector<br>
+                        Final vector: x, x, 120, 200, x
+                    </p>
+
+                    <p>
+                        Step by step searches are not possible in <code>std::vector&ltfloat&gt</code>, it is only possible to do
+                        comparisons with single values, like checking if 50 is &gt then 110, then 100, then 120, etc. 
+                        The closest comparison with how an <code>std::vector</code> can do this is going through an unordered 
+                        dataset linearly, passing through each element once, doing a total of N comparisons. 
+                        Comparing this to an <code>bm::sparse_vector_float</code>, using a scanner can be significantly faster 
+                        depending on the dataset. As seen above, the scanner would have to do 3 internal scans, and 
+                        then several more bitwise operations(and, or, and sub). There are multiple reasons why searching 
+                        this way can be faster than how an <code>std::vector</code> is searched. First, to understand how a scanner 
+                        finds all values greater than a certain value, X. To do this, the scanner does 2 steps, 
+                        the first step aggregating all bitplanes higher than X’s largest bit, which are definitely 
+                        larger than X. The next step it does is checking all the other bitplanes to make sure that 
+                        the value is greater than X, on a plane by plane basis instead of on a bit by bit basis 
+                        like a std::vector. So why is doing this faster? The first reason is compression, in a 
+                        well compressed sparse vector, it is possible to essentially skip bits, as they are all 
+                        similar to the nearby bits, enabling less operations needing to read the bits, allowing 
+                        bulk reading. The second reason is how the scanner does these searches, it uses bitwise 
+                        operations, bit_or and bit_or_and in order to find the bits that fit some parameter(&gt, &lt), which 
+                        due to internal optimizations allow for the bit skipping as well as combining multiple 
+                        operations together into one.
+                    </p>
+
+
+                    <h2>Experimental Environment</h2>
+
+                    <p>
+                        Tests were run on an Apple Macbook pro M2, with a performance comparison to a 
+                        Linux AMD PC with SIMD (SSE4.2, AVX2)
+                        Compilation settings on Mac:
+                    </p>
+                    <pre><code>g++  -Wall -Wc++11-extensions  -c   -D_REENTRANT -D__Darwin_25_5_0 -D_GNU_SOURCE -std=c++17 -Wall -Wextra -Werror=uninitialized -Wshadow -Wconversion -Wmissing-declarations -Wswitch-default -Wimplicit-fallthrough</code></pre>
+                    <p>
+                        Compilation settings on Linux:<br>
+                        SSE 4.2:
+                    </p>
+                        <pre><code>g++ -march=core2 -msse4.2 -c -DBMSSE42OPT -D_REENTRANT -D__Linux_6_18_33_2 -D_GNU_SOURCE -std=c++17 -Wall -g0 -O2 -ggdb -fomit-frame-pointer -pipe</code></pre>
+                    <p>
+                        AVX2:
+                    </p>
+                        <pre><code>g++ -march=skylake -mavx2 -c -DBMAVX2OPT -D_REENTRANT -D__Linux_6_18_33_2 -D_GNU_SOURCE -std=c++17 -Wall -g0 -O2 -ggdb -fomit-frame-pointer -pipe</code></pre>
+                    </p>
+
+                    <h2>Performance and benchmarking</h2>
+
+                    <p>
+                        Performance on historical transfer rates used in xsample11:<br>
+                        Number of Elements: Approx. 100,000<br>
+                        Memory Usage in bytes: 
+                    </p>
+
+                    <table border="1" cellspacing="0" cellpadding="6">
+                        <thead>
+                            <tr>
+                            <th>Data Structure Type</th>
+                            <th>Vector Name</th>
+                            <th>Memory Used (B)</th>
+                            <th>Serialized Size (B)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td></td>
+                            <td>std::vector&lt;float&gt;</td>
+                            <td>399852</td>
+                            <td></td>
+                            </tr>
+                            <tr>
+                            <td></td>
+                            <td>std::vector&lt;unsigned int&gt;</td>
+                            <td>399852</td>
+                            <td></td>
+                            </tr>
+                            <tr>
+                            <td></td>
+                            <td>std::vector&lt;std::string&gt; (excl. overhead)</td>
+                            <td>1899297</td>
+                            <td></td>
+                            </tr>
+                            <tr>
+                            <td>str_sparse_vector</td>
+                            <td>eur_day (dates)</td>
+                            <td>284346</td>
+                            <td>82507</td>
+                            </tr>
+                            <tr>
+                            <td>str_sparse_vector</td>
+                            <td>jpy_day (dates remapped)</td>
+                            <td>240020</td>
+                            <td>87530</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>eur_open</td>
+                            <td>375760</td>
+                            <td>229186</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>eur_high</td>
+                            <td>375236</td>
+                            <td>228422</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>eur_low</td>
+                            <td>375760</td>
+                            <td>229186</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector</td>
+                            <td>eur_pct_change</td>
+                            <td>191864</td>
+                            <td>114358</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>eur_close</td>
+                            <td>375236</td>
+                            <td>228422</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector</td>
+                            <td>eur_volume</td>
+                            <td>299004</td>
+                            <td>194225</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>jpy_open</td>
+                            <td>370448</td>
+                            <td>233827</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>jpy_high</td>
+                            <td>369380</td>
+                            <td>232607</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>jpy_low</td>
+                            <td>370448</td>
+                            <td>233827</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector</td>
+                            <td>jpy_pct_change</td>
+                            <td>194416</td>
+                            <td>115510</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_float</td>
+                            <td>jpy_close</td>
+                            <td>369380</td>
+                            <td>232607</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector</td>
+                            <td>jpy_volume</td>
+                            <td>297216</td>
+                            <td>190493</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>
+                        Time for a scanner to find every value in a certain range in this dataset: Approximately .1 ms
+                    </p>
+
+                    <p>
+                        Data sets for xsample11 were gotten from
+                        <a href="https://www.bluecapitaltrading.com/products/free-historical-data/">Dukascopy using Blue Capital Trading Data</a>
+                    </p>
+
+                    <p>
+                        <br><br><br>
+                        Performance on custom datasets: <br>
+                        Time in <strong>seconds</strong> to run 1000 range searches with different data structures and methods on 20 million items: <br>
+                        Vectors are gone through linearly
+                    </p>
+
+                    <table border="1" cellspacing="0" cellpadding="6">
+                        <thead>
+                            <tr>
+                            <th>Data Structure</th>
+                            <th>Linear Data</th>
+                            <th>Random Data</th>
+                            <th>Linear Data Linux SSE4.2</th>
+                            <th>Random Data Linux SSE4.2</th>
+                            <th>Linear Data Linux AVX2</th>
+                            <th>Random Data Linux AVX2</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>std::vector</td>
+                            <td>52</td>
+                            <td>83.34</td>
+                            <td>66</td>
+                            <td>120</td>
+                            <td>66</td>
+                            <td>120</td>
+                            </tr>
+                            <tr>
+                            <td>sparse_vector_scanner</td>
+                            <td>0.64</td>
+                            <td>14.66</td>
+                            <td>0.95</td>
+                            <td>17</td>
+                            <td>0.74</td>
+                            <td>28</td>
+                            </tr>
+                            <tr>
+                            <td>Const Iterator</td>
+                            <td>228</td>
+                            <td>480</td>
+                            <td>345</td>
+                            <td>624</td>
+                            <td>336</td>
+                            <td>618</td>
+                            </tr>
+                            <tr>
+                            <td>std::vector (35% NaN)</td>
+                            <td>58.46</td>
+                            <td>69.18</td>
+                            <td>96</td>
+                            <td>120</td>
+                            <td>96</td>
+                            <td>120</td>
+                            </tr>
+                            <tr>
+                            <td>RSC sparse_vector_scanner (35% Null)</td>
+                            <td>41.59</td>
+                            <td>150</td>
+                            <td>45</td>
+                            <td>180</td>
+                            <td>41</td>
+                            <td>162</td>
+                            </tr>
+                            <tr>
+                            <td>RSC Const Iterator (35% Null)</td>
+                            <td>348</td>
+                            <td>516</td>
+                            <td>498</td>
+                            <td>669.6</td>
+                            <td>564</td>
+                            <td>738</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <p>
+                        Graph of Mac Runtimes:
+                    </p>
+                    <img src="images/9.2.1_TimeGraph.png" alt="Graph comparing Time to run 1000 searches" width="650">
+
+
+                    <p>
+                        <br><br><br>
+                        Memory size in Bytes of a <code>sparse_vector_float</code> with different data types and sizes:
+                    </p>
+
+                    <table border="1" cellspacing="0" cellpadding="6">
+                        <thead>
+                            <tr>
+                            <th>Data Structure</th>
+                            <th>100000 Elements</th>
+                            <th>1000000 Elements</th>
+                            <th>10000000 Elements</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>std::vector&lt;float&gt;</td>
+                            <td>400024</td>
+                            <td>4000024</td>
+                            <td>40000024</td>
+                            </tr>
+                            <tr>
+                            <td>SVF Linear</td>
+                            <td>338176</td>
+                            <td>1819648</td>
+                            <td>12703488</td>
+                            </tr>
+                            <tr>
+                            <td>SVF Random</td>
+                            <td>539232</td>
+                            <td>3870464</td>
+                            <td>36430080</td>
+                            </tr>
+                            <tr>
+                            <td>RSC SVF Linear</td>
+                            <td>266256</td>
+                            <td>1558288</td>
+                            <td>11536280</td>
+                            </tr>
+                            <tr>
+                            <td>RSC SVF Random</td>
+                            <td>351344</td>
+                            <td>2765584</td>
+                            <td>26786576</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table border="0" cellspacing="0" cellpadding="10">
+                        <tr>
+                            <td><img src="images/9.1.0_Memory_100k.png" alt="Graph comparing memory usage in 100,000 elements" width="380"></td>
+                            <td><img src="images/9.1.0_Memory_1M.png" alt="Graph comparing memory usage in 1,000,000 elements" width="380"></td>
+                            <td><img src="images/9.1.0_Memory_10M.png" alt="Graph comparing memory usage in 10,000,000 elements" width="380"></td>
+                        </tr>
+                    </table>
+
+                    <p>
+                        Serialized size of <code>sparse_vector_float</code> with different data types and sizes:
+                    </p>
+
+                    <table border="1" cellspacing="0" cellpadding="6">
+                        <thead>
+                            <tr>
+                            <th>Data Structure</th>
+                            <th>100,000 Elements</th>
+                            <th>1,000,000 Elements</th>
+                            <th>10,000,000 Elements</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>std::vector&lt;float&gt;</td>
+                            <td>400024</td>
+                            <td>4000024</td>
+                            <td>40000024</td>
+                            </tr>
+                            <tr>
+                            <td>SVF Linear</td>
+                            <td>191310</td>
+                            <td>956513</td>
+                            <td>6890859</td>
+                            </tr>
+                            <tr>
+                            <td>SVF Random</td>
+                            <td>375352</td>
+                            <td>3470964</td>
+                            <td>34693378</td>
+                            </tr>
+                            <tr>
+                            <td>RSC SVF Linear</td>
+                            <td>149633</td>
+                            <td>1166626</td>
+                            <td>9122900</td>
+                            </tr>
+                            <tr>
+                            <td>RSC SVF Random</td>
+                            <td>254964</td>
+                            <td>2546823</td>
+                            <td>25480286</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table border="0" cellspacing="0" cellpadding="10">
+                        <tr>
+                            <td><img src="images/9.1.0_Serialized_100k.png" alt="Graph comparing serialized size of 100,000 elements" width="380"></td>
+                            <td><img src="images/9.1.0_Serialized_1M.png" alt="Graph comparing serialized size of 1,000,000 elements" width="380"></td>
+                            <td><img src="images/9.1.0_Serialized_10M.png" alt="Graph comparing serialized size of 10,000,000 elements" width="380"></td>
+                        </tr>
+                    </table>
+
+
+
+                    <h2>GitHub</h2>
+                    <p>
+                        Sources are available:<br>
+                        <a href="https://www.bluecapitaltrading.com/products/free-historical-data/">Dukascopy using Blue Capital Trading</a><br>
+                        <a href="https://github.com/tlk00/BitMagic/tree/master/samples/xsample11">xsample11</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer id="footer">
+
+            <section class="contact">
+                <h3>Follow us</h3>
+                <p>
+                    <ul class="contact-icons">
+                        <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+                        <li class="icon fa-envelope"><a href="mailto:info@bitmagic.io">info@bitmagic.io</a></li>                    </ul>
+                </p>
+            </section>
+
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <!-- Scripts -->
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/skel.min.js"></script>
+        <script src="assets/js/util.js"></script>
+        <script src="assets/js/jquery.dropotron.min.js"></script>
+        <!--[if lte IE 8]><script src="assets/js/ie/respond.min.js"></script><![endif]-->
+        <script src="assets/js/main.js"></script>
+
+    </body>
+</html>
