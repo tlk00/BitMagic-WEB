@@ -1,0 +1,267 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>BitMagic version 9.3.1</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" href="assets/css/main.css" />
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-110216813-1"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', 'UA-110216813-1');
+        </script>
+    </head>
+    <body>
+        <header id="header">
+            <span class="logo">
+                <a href="index.html">BitMagic</a>
+                <span>Library</span>
+            </span>
+            <nav id="nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li>
+                        <a href="#" class="icon fa-angle-down">Documentation</a>
+                        <ul>
+                            <li><a href="getting-started.html">Getting started</a></li>
+                            <li><a href="design.html">Design</a></li>
+                            <li><a href="apis.html">API Reference</a></li>
+                            <li><a href="doxygen/html/modules.html">Doxygen</a></li>
+                            <li><a href="release-notes.html">Release Notes</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="https://github.com/tlk00/BitMagic">GitHub</a></li>
+                    <li><a href="https://sourceforge.net/projects/bmagic/files/bmagic/" class="button">Download</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div class="wrapper">
+            <section class="main">
+                <section>
+                    <header>
+                        <h1>Version 9.3.1</h1>
+                        <span class="date">September 13, 2026</span>
+                    </header>
+                    <h2>Release Notes</h2>
+
+                    <p>
+                        BitMagic 9.3.1 expands support for memory-efficient storage and selective retrieval of compressed data. This release introduces direct file streaming, persistent deserialization indexes, faster sparse-vector traversal, and shared NULL planes for related columns.
+                    </p>
+                    
+                    <h3>New Functionality</h3>
+                    <ul>
+                        <li>
+                            <strong>Direct streaming serialization to disk. </strong>
+                            Write containers to seekable binary C++ streams without 
+                            first constructing a complete serialized BLOB in RAM. 
+                            Supported containers include 
+                            <code>bm::bvector&lt&gt</code>, <code>bm::sparse_vector&lt&gt</code>, <code>bm::rsc_sparse_vector&lt&gt</code>, <code>bm::str_sparse_vector&lt&gt</code>, and <code>bm::sparse_vector_float&lt&gt</code>. 
+                            Reusable working buffers reduce temporary memory requirements 
+                            under memory pressure. Stream output is byte-for-byte equivalent to RAM serialization 
+                            with the same settings.
+                        </li>
+                        <li>
+                            <strong>Stream-based deserialization. </strong>
+                            Restore containers directly from seekable binary input streams without 
+                            loading the entire serialized BLOB into a temporary RAM buffer. 
+                            Stream interfaces also support selective restoration and deserialization-index 
+                            construction.
+                        </li>
+                        <li>
+                            <strong>Index-assisted gather deserialization. </strong>
+                            Retrieve selected logical positions from serialized bit-vectors and 
+                            sparse vectors. A selection bit-vector identifies requested positions, 
+                            while bookmarks and a deserialization index help the decoder locate relevant 
+                            blocks and skip unrelated compressed payloads.
+                        </li>
+                        <li>
+                            <strong>Selective retrieval from memory-mapped files. </strong>
+                            Gather deserialization supports memory-mapped BLOBs, allowing applications 
+                            to keep large models and data-frame columns compressed on SSD and reconstruct 
+                            selected subsets on demand. Sparse retrieval can reduce resident memory, 
+                            decoding work, and accesses to unrelated mapped pages. 
+                            Access is block-oriented, and requested values are decoded into a 
+                            destination container.
+                        </li>
+                        <li>
+                            <strong>Persistent deserialization indexes. </strong>
+                            Build a navigation index once, save it, and restore it for subsequent 
+                            retrievals. The index records serialized marker offsets and bookmark 
+                            landing points; sparse-vector indexes organize this information across 
+                            their bit-planes. Persistence avoids rescanning the source BLOB to rebuild 
+                            the index on later runs. Versioned, compressed index serialization supports 
+                            bit-vectors, sparse vectors, and floating-point sparse vectors. 
+                            An index describes a particular serialized BLOB and must be rebuilt when 
+                            that representation changes.
+                        </li>
+                        <li>
+                            <strong>New <code>bm::for_each_sparse()</code> algorithms. </strong>
+                            Traverse integer, rank-select compressed, and floating-point sparse vectors 
+                            using reusable decoding buffers. Full traversal decodes values in chunks; a 
+                            filtered overload uses a selection bit-vector and batched <code>gather()</code> calls. 
+                            Callbacks receive <code>(value, is_null, index)</code>, with support for configurable buffer 
+                            sizes and early termination.
+                        </li>
+                        <li>
+                            <strong>Shared NULL planes. </strong>
+                            Related sparse-vector columns can share a common NOT NULL bit-vector, 
+                            reducing duplicated validity information. 
+                            Serialization can omit a follower's externally owned NULL plane. 
+                            Connected columns are restored by loading the owner first and attaching 
+                            followers before deserialization. RSC followers can also reuse the owner's 
+                            rank-select index.
+                        </li>
+                        <li>
+                            <strong>Explicit logical-size preservation. </strong>
+                            Sparse-vector serialization now preserves the complete logical extent, 
+                            including trailing NULL positions in rank-select compressed vectors.
+                        </li>
+                    </ul>
+
+                    <h3>Headers to explore</h3>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Header</th>
+                                    <th>Functionality</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <a href="https://github.com/tlk00/BitMagic/blob/v9.3.1/src/bmfio.h" target="_blank"><code>bmfio.h</code></a> - new
+                                    </td>
+                                    <td>
+                                        C++ stream I/O: <code>streams_encoder</code>, <code>streams_decoder</code>, <code>streams_deserializer&lt&gt</code>, 
+                                        <code>streams_sparse_vector_deserializer&lt&gt</code>, and 
+                                        <code>streams_sparse_vector_float_deserializer&lt&gt</code>.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <a href="https://github.com/tlk00/BitMagic/blob/v9.3.1/src/bmserial.h" target="_blank"><code>bmserial.h</code></a>
+                                    </td>
+                                    <td>
+                                        Bit-vector streaming support, indexed selective deserialization, 
+                                        and <code>deserialization_index&lt&gt</code> persistence.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <a href="https://github.com/tlk00/BitMagic/blob/v9.3.1/src/bmsparsevec_serial.h" target="_blank"><code>bmsparsevec_serial.h</code></a>
+                                    </td>
+                                    <td>
+                                        Sparse-vector gather deserialization, persistent indexes, 
+                                        and logical-size serialization.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <a href="https://github.com/tlk00/BitMagic/blob/v9.3.1/src/bmsparsevec_float_serial.h" target="_blank"><code>bmsparsevec_float_serial.h</code></a>
+                                    </td>
+                                    <td>
+                                        Floating-point sparse-vector serialization, gather deserialization, 
+                                        and persistent indexes.
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <a href="https://github.com/tlk00/BitMagic/blob/v9.3.1/src/bmsparsevec_algo.h" target="_blank"><code>bmsparsevec_algo.h</code></a>
+                                    </td>
+                                    <td>
+                                        Full and filtered <code>bm::for_each_sparse()</code> traversal.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>Performance Improvements and Bug fixes</h3>
+                    <ul>
+                        <li>Improved bookmark positioning and block skipping for repeated sparse gathers, including access to memory-mapped data.</li>
+                        <li>Improved rank decompression to use an available rank-select index.</li>
+                        <li>Optimized floating-point iteration and chunked traversal, including shared rank/count work when decoding RSC-backed exponent and mantissa components.</li>
+                        <li>Fixed sparse-vector deserialization to constrain restored value and NULL planes to the appropriate logical extent or requested range.</li>
+                        <li>Fixed handling of fully populated bit-vector superblocks in block-management code used by deserialization.</li>
+                        <li>Corrected construction and deserialization of floating-point sparse vectors with shared exponent/mantissa NULL information, including RSC-backed vectors.</li>
+                        <li>Improved GCC/Linux build compatibility and resolved compiler warnings.</li>
+                        <li>Updated native macOS/Xcode build configuration.</li>
+                        <li>Consolidated parallel stress-test runners and expanded regression and performance coverage for streaming I/O, indexed gathers, persistent indexes, shared NULL planes, and memory-mapped retrieval.</li>
+                    </ul>
+
+
+                    <h3>New Samples</h3>
+                    <ul>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/bvsample27" target="_blank">bvsample27</a>:</strong> 
+                            Bit-vector file I/O and indexed gather. Streaming serialization/deserialization, serializer reuse, saving and restoring deserialization indexes, and selective retrieval from files and RAM BLOBs.
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/rscsample07" target="_blank">rscsample07</a>:</strong> 
+                            Shared NULL planes. Connected RSC and plain sparse-vector columns, shared validity information, serialization, and consistent range restoration.
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/strsvsample10" target="_blank">strsvsample10</a>:</strong> 
+                            Memory-mapped string-vector retrieval. Streaming a string vector to disk, memory mapping the serialized file, and repeated index-assisted gathers.
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svfsample05" target="_blank">svfsample05</a>:</strong> 
+                            Search results and deferred float retrieval. Saving a floating-point vector, selection bit-vectors, and a deserialization index, then restoring selected values and computing aggregate statistics.
+                        </li>
+                    </ul>
+
+                    <h3>Expanded Samples and Documentation</h3>
+                    <ul>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svsample04" target="_blank">svsample04</a> 
+                                and <a href="https://github.com/tlk00/BitMagic/tree/master/samples/rscsample03" target="_blank">rscsample03</a>:</strong> 
+                                <code>bm::for_each_sparse()</code> traversal.
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svfsample02" target="_blank">svfsample02</a>:</strong> 
+                            floating-point traversal and streaming file serialization/deserialization.
+                        </li>
+                        <li>
+                            <strong><a href="https://github.com/tlk00/BitMagic/tree/master/samples/svsample08" target="_blank">svsample08</a>:</strong> 
+                            index-assisted selective sparse-vector restoration.
+                        </li>
+                        <li>
+                            Added individual READMEs throughout the non-xsample collection and expanded the 
+                            <a href="https://github.com/tlk00/BitMagic/tree/v9.3.1/samples" target="_blank">sample catalogue</a> 
+                            with cross-references.
+                        </li>
+                    </ul>
+
+                    <h3>Compatibility notes</h3>
+                    <ul>
+                        <li>New sparse-vector writers emit schema version 3 for 32-bit addressing or 4 for BM64ADDR, carrying explicit logical-size information. New readers retain support for older BLOBs; older readers are not guaranteed to accept the new format.</li>
+                        <li>The C++ file-stream adapters require seekable binary streams. Output streams must not use append mode because serialization patches headers and bookmarks.</li>
+                    </ul>
+                    
+
+                    <p>
+                        <a href="https://github.com/tlk00/BitMagic/releases/tag/v9.3.1" class="button">GitHub Releases</a>
+                    </p>
+                </section>
+            </section>
+        </div>
+
+        <h3>Follow us on Twitter</h3>
+        <ul class="contact-icons">
+            <li class="icon fa-twitter"><a href="https://twitter.com/bitmagicio">https://twitter.com/bitmagicio</a></li>
+        </ul>
+
+        <footer id="footer">
+            <div class="copyright">
+                &copy; BitMagic Library. All rights reserved. &nbsp; <a href="mailto:info@bitmagic.io">info@bitmagic.io</a>
+            </div>
+        </footer>
+
+        <script src="assets/js/jquery.min.js"></script>
+        <script src="assets/js/main.js"></script>
+    </body>
+</html>
